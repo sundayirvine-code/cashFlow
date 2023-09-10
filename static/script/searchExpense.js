@@ -45,8 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 2000);
                 }
 
-                /*const categoryCard = document.querySelector('[data-categoryname="${transaction.category}"]');
-                categoryCard.firstElementChild.nextElementSibling.textContent = tr*/
+                
 
                 document.getElementById('ExpenseSummaryAmount').textContent = data.total_expenses;
 
