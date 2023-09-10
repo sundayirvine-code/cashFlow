@@ -26,3 +26,19 @@ class RegistrationForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')],
                                      render_kw={"autocomplete": "off", "class": "form-control", "placeholder": "Confirm password", "aria-label": "Confirm password"})
     submit = SubmitField('Sign Up', render_kw={"class": "btn btn-primary", "id": "registration-submit-button"})
+
+class LoginForm(FlaskForm):
+    """
+    Represents a login form.
+    
+    Attributes:
+        email (StringField): Field for entering an email address.
+        password (PasswordField): Field for entering a password.
+        submit (SubmitField): Button for submitting the form.
+    """
+    
+    email = StringField('Email', validators=[DataRequired(), Email()],
+                        render_kw={"autocomplete": "off", "class": "form-control", "placeholder": "johndoe@example.com", "aria-label": "Email"})
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=8), Regexp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]*$', message='Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character.')],
+                             render_kw={"autocomplete": "off", "class": "form-control", "placeholder": "Password", "aria-label": "Password"})
+    submit = SubmitField('Log In', render_kw={"class": "btn btn-primary", "id": "registration-submit-button"})
