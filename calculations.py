@@ -150,3 +150,31 @@ def calculate_savings_between_dates(user_id, start_date=None, end_date=None):
     savings_percent_of_income = round(savings_percent_of_income, 2)
 
     return savings, savings_percent_of_income
+
+def calculate_expense_percentage_of_income(user_id, start_date=None, end_date=None):
+    """
+    Calculate the percentage of total income that each expense takes within a specified date range.
+
+    Args:
+        user_id (int): The user's ID.
+        start_date (date, optional): The start date of the range.
+        end_date (date, optional): The end date of the range.
+
+    Returns:
+        dict: A dictionary containing expense names as keys and their corresponding percentage of total income as values.
+        float: The percentage of total expenses as compared to total income.
+
+    """
+    total_expenses, individual_expenses = calculate_total_expenses_between_dates(user_id, start_date, end_date)
+    total_income, _ = calculate_total_income_between_dates(user_id, start_date, end_date)
+
+    expense_percentages = {}
+    for expense in individual_expenses:
+        expense_percent = (expense['amount'] / total_income) * 100 if total_income != 0 else 0
+        expense_percentages[expense['name']] = round(expense_percent, 2)
+
+    total_expense_percent_of_income = (total_expenses / total_income) * 100 if total_income != 0 else 0
+
+    total_expense_percent_of_income = round(total_expense_percent_of_income, 2)
+
+    return expense_percentages, total_expense_percent_of_income
