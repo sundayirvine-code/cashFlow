@@ -483,6 +483,93 @@ def manage_cash_in_transaction(transaction_id):
         cash_in_transaction.delete_transaction()
         return jsonify({'message': 'Transaction deleted successfully'})
 
+@app.route('/search_income_transactions', methods=['GET'])
+@login_required
+def search_income_transactions():
+    '''
+    Search Income transactions by date
+    '''
+    user_id = current_user.id 
+    start_date_str = request.args.get('from')
+    end_date_str = request.args.get('to')
+
+    try:
+        # Convert date strings to date objects with 'yyyy-mm-dd' format
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        total_income, individual_incomes = calculate_total_income_between_dates(
+            user_id, start_date, end_date
+        )
+
+        # Query the contribution of each category to the user's total income
+        income_totals = calculate_income_totals(current_user.id, start_date, end_date)
+
+        '''
+        Include debt as a category that brings in Income
+        '''
+        # Query unique debtor names for the current user
+        debtor_names = (
+            db.session.query(Credit.debtor)
+            .filter_by(user_id=current_user.id)
+            .distinct()
+            .all()
+        )
+
+        # Extract the debtor names from the query result and Populate the debtor field
+        unique_debtors = [debtor[0] for debtor in debtor_names]
+
+        # Calculate the sum of amount_payed for each debtor
+        debtor_totals = {}
+        for debtor_name in unique_debtors:
+            total_amount_payed = (
+                db.session.query(db.func.sum(Credit.amount_payed))
+                .filter_by(user_id=current_user.id, debtor=debtor_name)
+                .scalar()
+            )
+            if total_amount_payed is None:
+                total_amount_payed = 0
+            debtor_totals[debtor_name] = total_amount_payed
+
+        # Calculate the sum of all amount_payed values in the debtor_totals dictionary
+        total_debt_amount = sum(debtor_totals.values())
+
+        # Add the total_debt_amount to the income_totals dictionary with 'Debt' as the key
+        income_totals['Debt'] = total_debt_amount
+    
+
+        # Initialize a dictionary to store formatted amounts and percentages
+        formatted_income_totals = {}
+
+        # Calculate the total income
+        total_income = sum(income_totals.values())
+
+        # Format the amount values and update the income_totals dictionary
+        for category, amount in income_totals.items():
+            formatted_amount = "{:,.2f}/=".format(amount)
+            try:
+                percentage = "{:.2f}".format((amount / total_income) * 100)
+            except ZeroDivisionError:
+                percentage = "{:.2f}".format(0)
+            formatted_income_totals[category] = (formatted_amount, percentage)
+
+        # Replace the original income_totals dictionary with the formatted one
+        income_totals = formatted_income_totals
+
+
+        response_data = {
+            'total_income': str(total_income),  # Convert Decimal to string
+            'individual_incomes': individual_incomes,
+            'income_totals': income_totals
+        }
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+
 
 
  
