@@ -33,3 +33,34 @@ def home():
         str: The rendered HTML template for the home page.
     """
     return render_template('home.html')
+
+# User login
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """
+    Handle the login page.
+
+    If the user is already authenticated, redirect to the dashboard page.
+    If the request method is GET, render the login form.
+    If the request method is POST, process the form data and authenticate the user.
+
+    Returns:
+        str: The rendered HTML template for the login page, with the login form or flash messages.
+    """
+    
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+        user = authenticate_user(email, password)
+        if user:
+            login_user(user)
+            if current_user.is_authenticated:
+                username = current_user.first_name
+            return redirect(url_for('dashboard', username=username))  
+        else:
+            flash('Invalid email or password.', 'danger')
+    
+    return render_template('login.html', form=form)
+
