@@ -306,3 +306,40 @@ def update_budget_expense_with_cashout(cashout_id):
         db.session.rollback()
         return str(e)
 
+def create_debt(user_id, creditor, amount, date, description=None, date_due=None):
+    """
+    Create a debt transaction for a user.
+
+    Args:
+        user_id (int): The ID of the user.
+        creditor (str): The name of the creditor (will be converted to title case).
+        amount (float): The amount of the debt.
+        date (date): The date of the debt transaction.
+        description (str, optional): A description of the debt.
+        date_due (date, optional): The date when the debt is due to be paid.
+
+    Returns:
+        Union[Debt, str]: The created Debt instance or an error message.
+    """
+    from models import Debt
+
+    # Convert creditor to title case
+    creditor = creditor.title()
+
+    # Check if debt with same user_id and creditor already exists
+    existing_debt = Debt.query.filter_by(user_id=user_id, creditor=creditor).first()
+    if existing_debt:
+        return "Debt with the same creditor already exists for this user."
+
+    # Create and add the Debt instance
+    debt = Debt(user_id=user_id, creditor=creditor, amount=amount, date=date,
+                description=description, date_due=date_due)
+    
+    try:
+        db.session.add(debt)
+        db.session.commit()
+        return debt
+    except Exception as e:
+        db.session.rollback()
+        return str(e)
+
