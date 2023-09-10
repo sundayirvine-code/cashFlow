@@ -109,3 +109,20 @@ def calculate_total_income(user_id):
     incomes = CashIn.query.filter_by(user_id=user_id).all()
     total_income = sum(income.amount for income in incomes)
     return total_income
+
+def calculate_total_expenses(user_id):
+    """
+    Calculate the total expenses for a user.
+
+    Args:
+        user_id (int): The user's ID.
+
+    Returns:
+        float: The total expenses amount for the user.
+
+    """
+    from models import CashOut
+
+    expenses = CashOut.query.filter_by(user_id=user_id).all()
+    total_expenses = sum(expense.amount for expense in expenses)
+    return total_expenses
