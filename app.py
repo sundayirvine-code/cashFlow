@@ -278,8 +278,47 @@ def get_income_transactions():
 
     return jsonify({'income_transactions' : income_transactions, 'total_income': total_income})
 
+# create an income category
+@login_required
+@app.route('/create_income_category', methods=['POST'])
+def create_income_category():
+    """
+    Create a new income category.
 
+    Returns:
+        json: JSON response indicating success or an error message.
+    """
+
+    if request.method == 'POST':
+        # Handle the form data here
+        category_name = request.form.get('categoryName')
+        income_type_id = request.form.get('incomeType')
+
+        # Get the current user's ID
+        user_id = current_user.id
+
+        # Call the add_income function to insert the income category
+        result, income = add_income(user_id, category_name, income_type_id)
+
+        if result is True:
+            if income:
+                category_id = income.id
+                response_data = {
+                    'message': 'Category created successfully',
+                    'category_name': category_name,
+                    'category_id': category_id 
+                }
+                return jsonify(response_data), 200
+            else:
+                # Handle the case where the category was not found
+                return jsonify({'error': 'Category not found'}), 404
+        else:
+            # Handle the error case
+            response_data = {'error': result}  # 'result' contains the error message
+            return jsonify(response_data), 400
+    else:
+        # Handle other HTTP methods if needed
+        return abort(405)  # Method Not Allowed
  
-    
     
 
