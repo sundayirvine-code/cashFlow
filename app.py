@@ -318,7 +318,75 @@ def create_income_category():
             return jsonify(response_data), 400
     else:
         # Handle other HTTP methods if needed
-        return abort(405)  # Method Not Allowed
+        return abort(405)
+
+# Create an income transaction
+@login_required
+@app.route('/create_income_transaction', methods=['POST'])
+def create_income_transaction():
+    # Get form data from the request
+    income_category = request.form.get('incomeCategory')
+    amount = request.form.get('amount')
+    date = request.form.get('date')
+    debtor = request.form.get('debtor')
+    description = request.form.get('description')
+
+    # Convert income_category and amount to appropriate data types (e.g., int, float)
+    try:
+        income_category = int(income_category)
+        amount = float(amount)
+    except ValueError:
+        return jsonify({'error': 'Invalid data provided'}), 400
+    
+    # Convert the date string to a Python date object
+    try:
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date provided'}), 400
+
+    # Handle validation and creation of the income transaction
+    try:
+        user_id = current_user.id
+
+        # Query the Credit model to find the appropriate credit using debtor and user_id
+        credit_to_settle = Credit.query.filter_by(debtor=debtor, user_id=user_id, is_paid=False).first()
+
+        if not credit_to_settle and income_category == 1:
+            raise ValueError("No outstanding credit found for the specified debtor.")
+
+
+        # Call the add_cash_in_transaction function with the settled_credit_id
+        cash_in = add_cash_in_transaction(
+            user_id=user_id,
+            amount=amount,
+            date=date_obj,
+            income_id=income_category,
+            description=description,
+            settled_credit_id=credit_to_settle.id if credit_to_settle else None
+        )
+
+        income_category_name = Income.query.get(income_category).name
+
+        # Construct the JSON response with all required information
+        response_data = {
+            'message': 'Income transaction created successfully',
+            'transaction_id': cash_in.id,
+            'income_category_name': income_category_name,
+            'amount': amount,
+            'description': description,
+            'date': date,
+        }
+
+        return jsonify(response_data), 201
+
+    except ValueError as e:
+        # Handle validation errors
+        return jsonify({'error': str(e)}), 400
+
+    except Exception as e:
+        # Handle other errors
+        return jsonify({'error': 'An error occurred while creating the income transaction'}), 500
+
  
     
 
