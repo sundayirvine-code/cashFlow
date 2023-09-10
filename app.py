@@ -247,6 +247,38 @@ def income():
                            income_categories=income_categories,
                            income_totals=income_totals)
 
+
+@app.route('/get_income_transactions', methods=['GET'])
+@login_required
+def get_income_transactions():
+    '''
+    get the current months Income transactions. I could take this
+    and include it in the income route's GET request then update my 
+    income template to process the data
+    '''
+    # Calculate the start and end dates for the current month
+    today = date.today()
+    start_date = None
+    end_date = None
+
+    # Call the calculate_total_income_between_dates function
+    total_income, individual_incomes = calculate_total_income_between_dates(current_user.id, start_date, end_date)
+
+    # Prepare the data in the desired format
+    income_transactions = [
+        {
+            'transaction_id': income['id'],
+            'income_category_name': income['name'],
+            'description': income['description'],
+            'date': income['date'].strftime('%Y-%m-%d'),
+            'amount': str(income['amount']),
+        }
+        for index, income in enumerate(individual_incomes)
+    ]
+
+    return jsonify({'income_transactions' : income_transactions, 'total_income': total_income})
+
+
  
     
     
