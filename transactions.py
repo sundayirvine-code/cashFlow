@@ -37,3 +37,66 @@ def add_income(user_id, income_name, income_type_id):
     except Exception as e:
         db.session.rollback()
         return str(e)
+
+def calculate_income_totals(user_id, start_date=None, end_date=None):
+    """
+    Calculate the total income amounts for each income category of a user within a specified date range.
+
+    Args:
+        user_id (int): The user's ID for whom income totals are calculated.
+        start_date (date, optional): The start date of the date range (inclusive). If not provided, it defaults to the
+            beginning of the current month.
+        end_date (date, optional): The end date of the date range (inclusive). If not provided, it defaults to the
+            current date.
+
+    Returns:
+        dict: A dictionary where keys are income category names (str) and values are the corresponding total amounts (float).
+
+    Example:
+        # Calculate income totals for the current user for the current month
+        user_id = current_user.id
+        income_totals = calculate_income_totals(user_id)
+        print(income_totals)
+        
+        # Calculate income totals for the current user for a custom date range
+        start_date = date(2023, 1, 1)
+        end_date = date(2023, 1, 31)
+        income_totals = calculate_income_totals(user_id, start_date, end_date)
+        print(income_totals)
+    """
+    from datetime import date
+    from models import Income, CashIn
+
+    # If start_date is not provided, set it to the beginning of the current month
+    if not start_date:
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+
+    # If end_date is not provided, set it to the current date
+    if not end_date:
+        end_date = date.today()
+
+    # Query all income categories for the user
+    income_categories = Income.query.filter_by(user_id=user_id).all()
+
+    # Initialize a dictionary to store income category names and their corresponding total amounts
+    income_totals = {}
+
+    # Iterate through each income category
+    for category in income_categories:
+        # Query CashIn transactions for the specific income category within the date range
+        total_amount = CashIn.query.filter(
+            CashIn.user_id == user_id,
+            CashIn.income_id == category.id,
+            CashIn.date >= start_date,
+            CashIn.date <= end_date
+        ).with_entities(db.func.sum(CashIn.amount)).scalar()
+
+        # If there are no transactions, set total_amount to 0
+        if total_amount is None:
+            total_amount = 0
+
+        # Add the income category name and total amount to the income_totals dictionary
+        income_totals[category.name] = total_amount
+
+    return income_totals
