@@ -744,6 +744,76 @@ def create_expense_category():
 
     # Handle the case where an error occurred while adding the expense
     return jsonify({"success": False, "message": "An error occurred while adding the expense."}), 500
+
+# Create an expense transaction
+@login_required
+@app.route('/create_expense_transaction', methods=['POST'])
+def create_expense_transaction():
+    # Get form data from the request
+    expense_category = request.form.get('expenseCategory')
+    amount = request.form.get('amount')
+    date = request.form.get('date')
+    creditor = request.form.get('creditor')
+    description = request.form.get('description')
+
+    print(expense_category, amount, date, creditor, description)
+
+    # Convert income_category and amount to appropriate data types (e.g., int, float)
+    try:
+        expense_category = int(expense_category)
+        amount = float(amount)
+    except ValueError:
+        return jsonify({'error': 'Invalid data provided'}), 400
+    
+    # Convert the date string to a Python date object
+    try:
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date provided'}), 400
+
+    # Handle validation and creation of the expense transaction
+    try:
+        user_id = current_user.id
+
+        # Query the Debt model to find the appropriate debt using creditor and user_id
+        debt_to_settle = Debt.query.filter_by(creditor=creditor, user_id=user_id, is_paid=False).first()
+
+        if not debt_to_settle and expense_category == 1:
+            raise ValueError("No outstanding credit found for the specified debtor.")
+
+
+        # Call the add_cash_in_transaction function with the settled_credit_id
+        cash_out = add_cash_out_transaction(
+            user_id=user_id,
+            amount=amount,
+            date=date_obj,
+            expense_id=expense_category,
+            description=description,
+            settled_debt_id=debt_to_settle.id if debt_to_settle else None
+        )
+
+        expense_category_name = Expense.query.get(expense_category).name
+
+        # Construct the JSON response with all required information
+        response_data = {
+            'message': 'Expense transaction created successfully',
+            'transaction_id': cash_out.id,
+            'expense_category_name': expense_category_name,
+            'amount': "{:,.2f}/=".format(amount),
+            'description': description,
+            'date': date,
+        }
+
+        return jsonify(response_data), 201
+
+    except ValueError as e:
+        # Handle validation errors
+        return jsonify({'error': str(e)}), 400
+
+    except Exception as e:
+        # Handle other errors
+        return jsonify({'error': 'An error occurred while creating the income transaction'}), 500
+
  
 
 
