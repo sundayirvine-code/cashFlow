@@ -197,3 +197,31 @@ def calculate_expense_totals(user_id, start_date=None, end_date=None):
 
     return expense_totals
 
+def create_budget(user_id, year, month):
+    """
+    Create a budget for a specific user, year, and month.
+
+    Args:
+        user_id (int): The user's ID.
+        year (int): The year of the budget.
+        month (int): The month of the budget.
+
+    Returns:
+        Budget or str: The created Budget instance if successful, or an error message if unsuccessful.
+    """
+    from models import Budget
+
+    existing_budget = Budget.query.filter_by(user_id=user_id, year=year, month=month).first()
+    if existing_budget:
+        return "A budget already exists for this month."
+
+    budget = Budget(user_id=user_id, year=year, month=month)
+
+    try:
+        db.session.add(budget)
+        db.session.commit()
+        return budget
+    except Exception as e:
+        db.session.rollback()
+        return str(e)
+
