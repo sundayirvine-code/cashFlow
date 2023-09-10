@@ -126,3 +126,27 @@ def calculate_total_expenses(user_id):
     expenses = CashOut.query.filter_by(user_id=user_id).all()
     total_expenses = sum(expense.amount for expense in expenses)
     return total_expenses
+
+def calculate_savings_between_dates(user_id, start_date=None, end_date=None):
+    """
+    Calculate a user's savings within a specified date range.
+
+    Args:
+        user_id (int): The user's ID.
+        start_date (date, optional): The start date of the range.
+        end_date (date, optional): The end date of the range.
+
+    Returns:
+        float: The savings amount within the specified date range.
+        float: The percentage of savings as compared to total income.
+
+    """
+    total_income, _ = calculate_total_income_between_dates(user_id, start_date, end_date)
+    total_expenses, _ = calculate_total_expenses_between_dates(user_id, start_date, end_date)
+
+    savings = (total_income) - (total_expenses)
+    savings_percent_of_income = (savings / total_income) * 100 if total_income != 0 else 0
+
+    savings_percent_of_income = round(savings_percent_of_income, 2)
+
+    return savings, savings_percent_of_income
