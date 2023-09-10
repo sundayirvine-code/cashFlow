@@ -903,8 +903,109 @@ def search_expense_transactions():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/manage_expense_transaction/<int:transaction_id>', methods=['PUT', 'DELETE'])
+@login_required
+def manage_cash_out_transaction(transaction_id):
+    cash_out_transaction = CashOut.query.get(transaction_id)
+    #print(cash_in_transaction, 'test 1')
+
+    if not cash_out_transaction:
+        return jsonify({'error': 'Transaction not found'}), 404
+
+    print('test 2: transaction available')
+    if request.method == 'PUT':
+        try:
+            # Get the data from the request JSON
+            data = request.get_json()
+            print(data, 'test 3 json data exists')
+            # Validate and extract the data
+            new_description = data.get('description', cash_out_transaction.description)
+            print(new_description, 'test 4 new description check')
+
+            new_amount = data.get('amount', cash_out_transaction.amount)
+            print(new_amount, 'test 5 new amount check')
+
+            new_date = data.get('date', cash_out_transaction.date)
+            print(new_date, 'test 6 new date check')
+
+            # Convert amount to appropriate data types (e.g., int, float)
+            try:
+                new_amount = float(new_amount)
+                print(new_amount, 'test 7 new amount data type check')
+            except ValueError:
+                return jsonify({'error': 'Invalid data provided'}), 400
+            
+            # Convert the date string to a Python date object
+            try:
+                new_date = datetime.strptime(new_date, '%Y-%m-%d').date()
+                print(new_description, 'test 8 new date data type check')
+            except ValueError:
+                return jsonify({'error': 'Invalid date provided'}), 400
+
+            if new_amount < 0:
+                print(new_amount, 'test 9 new amount less 0 check')
+                return jsonify({'error': 'Amount cannot be negative'}), 400
+
+            # Check if it's a credit given out 
+            if cash_out_transaction.settled_debt_id is not None:
+                print(new_description, 'test 10 this is a credit payment check')
+                # Retrieve the associated debt object
+                debt = Debt.query.get(cash_out_transaction.settled_debt_id)
+
+                if debt is None:
+                    #print(credit, 'test 11 new credit to be settled is available check')
+                    return jsonify({'error': 'Associated debt not found'}), 400
+
+                # Check if the credit has been settled
+                if debt.is_paid:
+                    #print(debt.is_paid, 'test 12 has the credit been paid already? check')
+                    return jsonify({'error': 'Credit has already been paid'}), 400
+
+                # Check if the new amount + amount_payed exceeds the debt amount
+                if new_amount + debt.amount_payed > debt.amount:
+                    print('test 13 Payment exceeds credit amount check')
+                    return jsonify({'error': 'Payment exceeds credit amount'}), 400
+
+                # Update the amount_payed field of the credit
+                debt.amount_payed += new_amount
+
+                # Mark the credit as paid if the amount_payed equals the credit amount
+                if debt.amount_payed == debt.amount:
+                    debt.is_paid = True
+
+            # Call the update_transaction method
+            cash_out_transaction.update_transaction(new_description, new_amount, new_date)
+
+            # Format the date as 'yyyy-mm-dd'
+            formatted_date = cash_out_transaction.date.strftime('%Y-%m-%d')
+
+            # Create a dictionary with the updated data
+            updated_data = {
+                'message': 'Transaction updated successfully',
+                'id': cash_out_transaction.id,
+                'description': cash_out_transaction.description,
+                'amount': cash_out_transaction.amount,
+                'date': formatted_date,
+            }
+
+            return jsonify({'data': updated_data})
+
+        except Exception as e:
+            print('test 14 something else is wrong')
+            return jsonify({'error': 'Invalid data format'}), 400
+
+    elif request.method == 'DELETE':
+        # Call the delete_transaction method
+        cash_out_transaction.delete_transaction()
+        return jsonify({'message': 'Transaction deleted successfully'})
 
 
- 
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        initialize_default_income_types()
+
+    app.run(debug=True)
 
 
