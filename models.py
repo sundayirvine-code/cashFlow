@@ -61,3 +61,22 @@ class Income(db.Model):
     def __repr__(self):
         return f"<Income {self.name}>"
 
+class Expense(db.Model):
+    """
+    Represents an expense category associated with a user.
+
+    Attributes:
+        id (int): The unique identifier for the expense transaction.
+        name (str): The name of the expense.
+        user_id (int): The foreign key referencing the associated User.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    budget_expenses = db.relationship('BudgetExpense', back_populates='expense', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f"<Expense {self.name}>"
+
