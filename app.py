@@ -64,6 +64,41 @@ def login():
     
     return render_template('login.html', form=form)
 
+# User Registration
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """
+    Handle the Register page.
+
+    If the request method is GET, render the signup form.
+    If the request method is POST, process the form data and create a new user.
+
+    Returns:
+        str: The rendered HTML template for the register page, with the register form or flash messages.
+    """
+    form = RegistrationForm()
+
+    if form.validate_on_submit():
+        first_name = form.first_name.data
+        last_name = form.last_name.data
+        password = form.password.data
+        email = form.email.data
+
+        # Check if the email already exists in the database
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Email already exists. Please choose a different one.', 'danger')
+            return redirect(url_for('register'))
+
+        # Create a new user
+        new_user = register_user(first_name=first_name, last_name=last_name, password=password, email=email)
+
+        flash('Registration successful!', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html', form=form)
+
+
 # User logout
 @app.route('/logout')
 @login_required
