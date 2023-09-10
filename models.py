@@ -191,4 +191,31 @@ class Budget(db.Model):
     def __repr__(self):
         return f"<Budget {self.year}-{self.month} for User {self.user_id}>"
 
+class BudgetExpense(db.Model):
+    """
+    Represents an expense associated with a budget, including the expected and spent amounts.
+
+    Attributes:
+        id (int): The unique identifier for the budget expense.
+        budget_id (int): The foreign key referencing the associated Budget.
+        expense_id (int): The foreign key referencing the associated Expense.
+        expected_amount (float): The expected amount to be spent on the expense in the budget.
+        spent_amount (float): The amount that has been spent on the expense in the budget.
+    """
+    
+    id = db.Column(db.Integer, primary_key=True)
+    budget_id = db.Column(db.Integer, db.ForeignKey('budget.id'), nullable=False)
+    expense_id = db.Column(db.Integer, db.ForeignKey('expense.id', ondelete='CASCADE'), nullable=False)
+    expected_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    spent_amount = db.Column(db.Numeric(10, 2), default=0.0)
+
+    budget = db.relationship('Budget', back_populates='expenses')
+    expense = db.relationship('Expense', back_populates='budget_expenses')
+
+    # Add a unique constraint to prevent duplicate budget expense entries
+    __table_args__ = (db.UniqueConstraint('budget_id', 'expense_id'),)
+
+    def __repr__(self):
+        return f"<BudgetExpense budget_id={self.budget_id}, expense_id={self.expense_id}>"
+
 
