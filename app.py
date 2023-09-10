@@ -107,6 +107,146 @@ def dashboard():
         return render_template('dashboard.html', username=username)
     else:
         return redirect(url_for('login'))
+
+# User Income management
+@login_required
+@app.route('/income', methods=['GET', 'POST'])
+def income():
+    """
+    Handle user income management.
+
+    Returns:
+        str: The rendered HTML template for income management.
+    """
+    if request.method == 'POST':
+        '''
+        Filter Income transactions by category
+        '''
+        try:
+            # Handle AJAX POST request to retrieve transactions by category
+            category_name = request.json.get('category_name')
+            print(category_name)
+
+            user_id = current_user.id
+
+            # Find the income category ID for the given category name and current user
+            if   category_name == 'Debt':
+                income_category = Income.query.filter_by(user_id=0, name=category_name).first()
+                print(income_category)
+            else:
+                income_category = Income.query.filter_by(user_id=user_id, name=category_name).first()
+
+            if income_category:
+                if category_name == 'Debt':
+                    income_category_id = 1
+
+                else:
+                    income_category_id = income_category.id
+
+                print(income_category_id)
+
+                # Query CashIn transactions for the specified income category ID and user ID
+                transactions = CashIn.query.filter_by(income_id=income_category_id, user_id=user_id).all()
+
+                # Extract the required fields from the transactions
+                transaction_data = []
+                for transaction in transactions:
+                    transaction_data.append({
+                        'id': transaction.id,
+                        'category': category_name,
+                        'amount': float(transaction.amount),
+                        'date': transaction.date.strftime('%Y-%m-%d'),
+                        'description': transaction.description
+                    })
+
+                return jsonify({'transactions': transaction_data})
+            
+            else:
+                return jsonify({'error': 'Category not found for the current user'}), 404
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+
+    category_form = IncomeCategoryForm()
+    transaction_form = IncomeTransactionForm()
+
+    # Query all IncomeType records (shared among all users) and Populate the incomeType field
+    income_types = IncomeType.query.all()
+    category_form.incomeType.choices = [(it.id, it.name) for it in income_types]
+
+    # Query Income categories for the current user and Populate the incomeCategory field
+    income_categories = Income.query.filter_by(user_id=current_user.id).all()
+    income_categories.insert(0, Income(id=1, user_id=0, name='Debt'))
+    transaction_form.incomeCategory.choices = [(ic.id, ic.name) for ic in income_categories]
+
+    # Query the contribution of each category to the user's total income
+    income_totals = calculate_income_totals(current_user.id)
+
+    '''
+    Include debt as a category that brings in Income
+    '''
+    # Query unique debtor names for the current user
+    debtor_names = (
+        db.session.query(Credit.debtor)
+        .filter_by(user_id=current_user.id)
+        .distinct()
+        .all()
+    )
+
+    # Extract the debtor names from the query result and Populate the debtor field
+    unique_debtors = [debtor[0] for debtor in debtor_names]
+    transaction_form.debtor.choices = [(debtor, debtor) for debtor in unique_debtors]
+
+    '''
+    COME BACK HERE WHEN DEALING WITH DEBT
+    '''
+    # Calculate the sum of amount_payed for each debtor
+    debtor_totals = {}
+    for debtor_name in unique_debtors:
+        total_amount_payed = (
+            db.session.query(db.func.sum(Credit.amount_payed))
+            .filter_by(user_id=current_user.id, debtor=debtor_name)
+            .scalar()
+        )
+        if total_amount_payed is None:
+            total_amount_payed = 0
+        debtor_totals[debtor_name] = total_amount_payed
+
+    # Calculate the sum of all amount_payed values in the debtor_totals dictionary
+    total_debt_amount = sum(debtor_totals.values())
+
+    # Add the total_debt_amount to the income_totals dictionary with 'Debt' as the key
+    income_totals['Debt'] = total_debt_amount
+  
+
+    # Initialize a dictionary to store formatted amounts and percentages
+    formatted_income_totals = {}
+
+    # Calculate the total income
+    total_income = sum(income_totals.values())
+
+    # Format the amount values and update the income_totals dictionary
+    for category, amount in income_totals.items():
+        formatted_amount = "{:,.2f}/=".format(amount)
+        try:
+            percentage = "{:.2f}".format((amount / total_income) * 100)
+        except ZeroDivisionError:
+            percentage = "{:.2f}".format(0)
+        formatted_income_totals[category] = (formatted_amount, percentage)
+
+    # Replace the original income_totals dictionary with the formatted one
+    income_totals = formatted_income_totals
+
+    '''
+    This info is used to porpulate the cards and forms
+    '''
+    return render_template('income.html', 
+                           category_form=category_form, 
+                           transaction_form=transaction_form,
+                           income_types=income_types, 
+                           income_categories=income_categories,
+                           income_totals=income_totals)
+
  
     
     
