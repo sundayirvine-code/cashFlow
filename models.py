@@ -255,4 +255,40 @@ class Debt(db.Model):
     def __repr__(self):
         return f"<Debt {self.amount} to {self.creditor} on {self.date}>"
 
+class Credit(db.Model):
+    """
+    Represents a credit transaction associated with a user. Someone who owes you money
+
+    Attributes:
+        id (int): The unique identifier for the credit transaction.
+        user_id (int): The foreign key referencing the associated User.
+        debtor (str): The name of the debtor.
+        amount (float): The amount of the credit.
+        date (date): The date of the credit transaction.
+        description (str): A description of the credit.
+        date_due (date): The date when the credit is due to be received.
+        is_paid (bool): Indicates whether the credit has been received (True) or not (False).
+        amount_payed (float): The amount of the credit that has been received.
+        cash_in_transactions (relationship): One-to-many relationship with CashIn.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    debtor = db.Column(db.String(100), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    description = db.Column(db.String(200), nullable=True)
+    date_due = db.Column(db.Date, nullable=True)
+    is_paid = db.Column(db.Boolean, default=False)
+    amount_payed = db.Column(db.Numeric(10, 2), default=0.0)
+
+    cash_in_transactions = db.relationship('CashIn', back_populates='settled_credit', cascade='all')
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'debtor', name='_user_debtor_uc'),
+    )  
+
+    def __repr__(self):
+        return f"<Credit {self.amount} from {self.debtor} on {self.date}>"
+
 
