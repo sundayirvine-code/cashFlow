@@ -718,4 +718,32 @@ def expense():
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
+@app.route('/create_expense_category', methods=['POST'])
+@login_required
+def create_expense_category():
+    # Get the user ID from the current_user object provided by Flask-Login
+    user_id = current_user.id
+
+    # Get the category name from the request data
+    data = request.get_json()
+    expense_name = data.get('categoryName')
+
+    if not expense_name:
+        return jsonify({"success": False, "message": "Category name cannot be empty."}), 400
+
+    if len(expense_name) > 100:
+        return jsonify({"success": False, "message": "Category name cannot exceed 100 characters."}), 400
+
+    # Attempt to add the expense category
+    result = add_expense(user_id, expense_name)
+
+    if isinstance(result, Expense):
+        # Expense category added successfully
+        expense = result
+        return jsonify({"success": True, "name": expense.name, "id": expense.id})
+
+    # Handle the case where an error occurred while adding the expense
+    return jsonify({"success": False, "message": "An error occurred while adding the expense."}), 500
+ 
+
 
