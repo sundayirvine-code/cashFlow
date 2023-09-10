@@ -225,3 +225,31 @@ def create_budget(user_id, year, month):
         db.session.rollback()
         return str(e)
 
+def add_budget_expense(budget_id, expense_id, expected_amount):
+    """
+    Add an expense to a budget with the expected amount.
+
+    Args:
+        budget_id (int): The ID of the budget.
+        expense_id (int): The ID of the associated expense.
+        expected_amount (float): The expected amount to be spent on the expense.
+
+    Returns:
+        BudgetExpense or str: The created BudgetExpense instance if successful, or an error message if unsuccessful.
+    """
+    from models import BudgetExpense
+
+    existing_budget_expense = BudgetExpense.query.filter_by(budget_id=budget_id, expense_id=expense_id).first()
+    if existing_budget_expense:
+        return "An expense with the same ID already exists in this budget."
+    
+    budget_expense = BudgetExpense(budget_id=budget_id, expense_id=expense_id, expected_amount=expected_amount)
+
+    try:
+        db.session.add(budget_expense)
+        db.session.commit()
+        return budget_expense
+    except Exception as e:
+        db.session.rollback()
+        return str(e)
+
