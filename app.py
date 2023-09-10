@@ -113,7 +113,6 @@ def logout():
     flash('Logged out successfully.', 'info')
     return redirect(url_for('home'))
 
-# User Dashboard
 @login_required
 @app.route('/dashboard')
 def dashboard():
@@ -124,22 +123,33 @@ def dashboard():
         str: The rendered HTML template for the user's dashboard.
     """
     if current_user.is_authenticated:
-        # Get the username
-        username = request.args.get('username')
+        # Get the user ID
+        user_id = current_user.id
 
-        # calculate total expenses
+        user = User.query.get(user_id).first_name
 
-        # calculate total income
+        # Calculate total income and individual income transactions for the current month
+        total_income, income_transactions = calculate_total_income_between_dates(user_id)
+        income_transactions = [{'type': 'Income', **transaction} for transaction in income_transactions]
 
-        # calculate total balance
+        # Calculate total expenses and individual expense transactions for the current month
+        total_expenses, expense_transactions = calculate_total_expenses_between_dates(user_id)
+        expense_transactions = [{'type': 'Expense', **transaction} for transaction in expense_transactions]
 
-        # Income Chart data
-
-        # Expense Chart data
-
-        # Transaction History         
+        # Merge income and expense transactions, and sort them by date
+        all_transactions = income_transactions + expense_transactions
+        all_transactions.sort(key=lambda x: x['date'])
         
-        return render_template('dashboard.html', username=username)
+        # Calculate total balance
+        total_balance = total_income - total_expenses
+
+        # Merge income and expense transactions, and sort them by date
+        all_transactions = income_transactions + expense_transactions
+        all_transactions.sort(key=lambda x: x['date'])
+
+        print(all_transactions)
+
+        return render_template('dashboard.html', total_income=total_income, total_expenses=total_expenses, total_balance=total_balance, transactions=all_transactions, username=user)
     else:
         return redirect(url_for('login'))
 

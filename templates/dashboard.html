@@ -36,23 +36,23 @@
                             <span class="text nav-text">Dashboard</span>
                         </a>
                         <a href="{{ url_for('income') }}">
-                            <i class="bi bi-currency-bitcoin"></i>
+                            <i class="bi bi-wallet2"></i>
                             <span class="text nav-text">Income</span>
                         </a>
                         <a href="{{ url_for('expense') }}">
                             <i class="bi bi-currency-pound"></i>
                             <span class="text nav-text">Expense</span>
                         </a>
-                        <a href="#">
-                            <i class="bi bi-currency-yen"></i>
+                        <a href="#">                
+                            <i class="bi bi-currency-euro"></i>
                             <span class="text nav-text">Credit</span>
                         </a>
                         <a href="#">
-                            <i class="bi bi-currency-euro"></i>
+                            <i class="bi bi-currency-yen"></i>
                             <span class="text nav-text">Debt</span>
                         </a>
                         <a href="#">
-                            <i class="bi bi-wallet2"></i>
+                            <i class="bi bi-currency-bitcoin"></i>
                             <span class="text nav-text">Budget</span>
                         </a>
                         <a href="#">
@@ -84,23 +84,58 @@
                 <div id="expenseChart">
 
                 </div>
+                <div id="extraChart">
+
+                </div>
             </div>
             <div id="incomeExpenseBalanceBox">
                 <div id="incomeBox">
-
+                    {{total_income}}
                 </div>
                 <div id="expenseBox">
-
+                    {{total_expenses}}
                 </div>
                 <div id="balanceBox">
-                           
+                    {{total_balance}}   
+                </div>
+                <div id="calendarBox">
+
                 </div>
             </div>
             <div id="transactionHistoryBox">
                 <div id="transactionBox">
-
-                </div>
-                <div id="calendarBox">
+                    <div id="transactionTable">
+                        <table class="table table-responsive" id="table">
+                            <thead class="sticky-top" style="background-color: #485b9b;">
+                                <tr>
+                                    <th scope="col">#ID</th>
+                                    <th scope="col">Category</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionTableBody">
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>
+                                        {% if transaction.type == 'Income' %}
+                                            {{ "CFINC-{0:03d}".format(transaction["id"]) }}
+                                        {% else %}
+                                            {{ "CFEXP-{0:03d}".format(transaction["id"]) }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.name }}</td>
+                                    <td>{{ transaction.description }}</td>
+                                    <td>{{ transaction.date }}</td>
+                                    <td class="{% if transaction.type == 'Income' %}income_amount_cell{% else %}expense_amount_cell{% endif %}">
+                                        {{ "{:,.2f}/=".format(transaction.amount) }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>                    
 
                 </div>
             </div>
