@@ -80,3 +80,43 @@ class Expense(db.Model):
     def __repr__(self):
         return f"<Expense {self.name}>"
 
+class CashIn(db.Model):
+    """
+    Represents a cash inflow transaction associated with a user and an income.
+
+    Attributes:
+        id (int): The unique identifier for the cash inflow transaction.
+        user_id (int): The foreign key referencing the associated User.
+        income_id (int): The foreign key referencing the associated Income.
+        amount (float): The amount of cash inflow.
+        date (date): The date of the cash inflow transaction.
+        description: Details of the transaction
+        settled_credit_id (int): The foreign key referencing the associated Credit (optional).
+        settled_credit (relationship): Many-to-one relationship with Credit.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    income_id = db.Column(db.Integer, db.ForeignKey('income.id'), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    description = db.Column(db.String(100), nullable=True)
+    settled_credit_id = db.Column(db.Integer, db.ForeignKey('credit.id'), nullable=True)
+
+    settled_credit = db.relationship('Credit', back_populates='cash_in_transactions')
+
+    def update_transaction(self, new_description, new_amount, new_date):
+        # Update the transaction attributes
+        self.description = new_description
+        self.amount = new_amount
+        self.date = new_date
+        db.session.commit()
+
+    def delete_transaction(self):
+        # Delete the transaction from the database
+        db.session.delete(self)
+        db.session.commit()
+
+    def __repr__(self):
+        return f"<CashIn {self.amount} on {self.date}>"
+
