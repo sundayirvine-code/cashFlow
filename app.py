@@ -61,6 +61,8 @@ def login():
             return redirect(url_for('dashboard', username=username))  
         else:
             flash('Invalid email or password.', 'danger')
+    
+    return render_template('login.html', form=form)
 
 # User logout
 @app.route('/logout')
@@ -76,6 +78,36 @@ def logout():
     flash('Logged out successfully.', 'info')
     return redirect(url_for('home'))
 
+# User Dashboard
+@login_required
+@app.route('/dashboard')
+def dashboard():
+    """
+    Render the user's Dashboard.
+
+    Returns:
+        str: The rendered HTML template for the user's dashboard.
+    """
+    if current_user.is_authenticated:
+        # Get the username
+        username = request.args.get('username')
+
+        # calculate total expenses
+
+        # calculate total income
+
+        # calculate total balance
+
+        # Income Chart data
+
+        # Expense Chart data
+
+        # Transaction History         
+        
+        return render_template('dashboard.html', username=username)
+    else:
+        return redirect(url_for('login'))
+ 
     
-    return render_template('login.html', form=form)
+    
 
