@@ -54,3 +54,21 @@ class IncomeCategoryForm(FlaskForm):
     
     categoryName = StringField('Category Name', validators=[DataRequired()])
     incomeType = SelectField('Choose Income Type', coerce=int)
+
+class IncomeTransactionForm(FlaskForm):
+    """
+    Represents a form for adding an income transaction.
+
+    Attributes:
+        incomeCategory (SelectField): Dropdown for choosing a category.
+        amount (FloatField): Field for entering the transaction amount.
+        date (DateField): Field for entering the transaction date.
+        debtor (SelectField): Dropdown for choosing a debtor (optional).
+        description (TextAreaField): Field for entering a transaction description (optional).
+    """
+    
+    incomeCategory = SelectField('Choose Category', coerce=int)
+    amount = FloatField('Amount', validators=[DataRequired()])
+    date = DateField('Date', validators=[DataRequired()])
+    debtor = SelectField('Debtor (optional)', coerce=int)
+    description = TextAreaField('Description (optional)')
