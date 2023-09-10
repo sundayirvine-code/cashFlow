@@ -253,3 +253,56 @@ def add_budget_expense(budget_id, expense_id, expected_amount):
         db.session.rollback()
         return str(e)
 
+def update_budget_expense_with_cashout(cashout_id):
+    """
+    Update BudgetExpense with the amount of a CashOut transaction.
+
+    Args:
+        cashout_id (int): The ID of the CashOut transaction to be processed.
+    Returns:
+        float or str: The new spent_amount of the BudgetExpense if successful, or an error message if unsuccessful.
+    """
+    from models import CashOut, Expense, Budget, BudgetExpense
+
+    cashout = db.session.get(CashOut, cashout_id)
+
+    if not cashout:
+        return "CashOut transaction not found."
+
+    # Get the associated expense
+    expense = db.session.get(Expense, cashout.expense_id)
+
+    if not expense:
+        return "Associated expense not found."
+
+    # Get the current month's budget for the user
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if cashout.date.year != current_year or cashout.date.month != current_month:
+        # try to get the associated budget when this is returned.
+        return "CashOut transaction is not in the current Budget's year and month."
+    
+    # Get the current month's budget for the user
+    budget = Budget.query.filter_by(user_id=cashout.user_id, year=current_year, month=current_month).first()
+
+    if not budget:
+        return "Budget for the current month not found."
+
+    # Check if the associated expense is part of the budget
+    budget_expense = BudgetExpense.query.filter_by(budget_id=budget.id, expense_id=expense.id).first()
+
+    if not budget_expense:
+        return "Associated expense is not part of the budget for the current month."
+
+    # Update the spent_amount of the BudgetExpense
+    budget_expense.spent_amount += cashout.amount
+
+    try:
+        db.session.commit()
+        return budget_expense.spent_amount
+    except Exception as e:
+        db.session.rollback()
+        return str(e)
+
