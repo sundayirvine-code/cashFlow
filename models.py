@@ -120,3 +120,44 @@ class CashIn(db.Model):
     def __repr__(self):
         return f"<CashIn {self.amount} on {self.date}>"
 
+class CashOut(db.Model):
+    """
+    Represents a cash outflow transaction associated with a user and an expense.
+
+    Attributes:
+        id (int): The unique identifier for the cash outflow transaction.
+        user_id (int): The foreign key referencing the associated User.
+        amount (float): The amount of cash outflow.
+        date (date): The date of the cash outflow transaction.
+        expense_id (int): The foreign key referencing the associated Expense.
+        description: Details of the transaction
+        settled_debt_id (int): The foreign key referencing the associated Debt (optional).
+        settled_debt (relationship): Many-to-one relationship with Debt.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    expense_id = db.Column(db.Integer, db.ForeignKey('expense.id'), nullable=False)
+    description = db.Column(db.String(100), nullable=True)
+    settled_debt_id = db.Column(db.Integer, db.ForeignKey('debt.id'), nullable=True)
+
+    settled_debt = db.relationship('Debt', back_populates='cash_out_transactions')
+
+    def update_transaction(self, new_description, new_amount, new_date):
+        # Update the transaction attributes
+        self.description = new_description
+        self.amount = new_amount
+        self.date = new_date
+        db.session.commit()
+
+    def delete_transaction(self):
+        # Delete the transaction from the database
+        db.session.delete(self)
+        db.session.commit()
+
+    def __repr__(self):
+        return f"<CashOut {self.amount} on {self.date}>"
+
+
