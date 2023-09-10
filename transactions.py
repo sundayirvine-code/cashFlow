@@ -343,3 +343,39 @@ def create_debt(user_id, creditor, amount, date, description=None, date_due=None
         db.session.rollback()
         return str(e)
 
+def create_credit(user_id, debtor, amount, date, description=None, date_due=None):
+    """
+    Create a credit transaction for a user.
+
+    Args:
+        user_id (int): The ID of the user.
+        debtor (str): The name of the debtor 
+        amount (float): The amount of the credit.
+        date (date): The date of the credit transaction.
+        description (str, optional): A description of the credit.
+        date_due (date, optional): The date when the credit is due to be received.
+
+    Returns:
+        Union[Credit, str]: The created Credit instance or an error message.
+    """
+    from models import Credit
+
+    # Convert debtor to title case
+    debtor = debtor.title()
+
+    # Check if credit with same user_id and debtor already exists
+    existing_credit = Credit.query.filter_by(user_id=user_id, debtor=debtor).first()
+    if existing_credit:
+        return "Credit with the same debtor already exists for this user."
+
+    # Create and add the Credit instance
+    credit = Credit(user_id=user_id, debtor=debtor, amount=amount, date=date,
+                    description=description, date_due=date_due)
+    try:
+        db.session.add(credit)
+        db.session.commit()
+        return credit
+    except Exception as e:
+        db.session.rollback()
+        return str(e)
+
