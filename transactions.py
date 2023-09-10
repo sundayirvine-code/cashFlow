@@ -379,3 +379,87 @@ def create_credit(user_id, debtor, amount, date, description=None, date_due=None
         db.session.rollback()
         return str(e)
 
+def add_cash_out_transaction(user_id, amount, date, expense_id, description=None, settled_debt_id=None):
+    """
+    Add a CashOut transaction to the database.
+
+    Args:
+        user_id (int): The user's ID associated with the transaction.
+        amount (float): The amount of the cash outflow.
+        date (date): The date of the transaction.
+        expense_id (int): The ID of the associated expense.
+        description (str, optional): A description of the transaction.
+        settled_debt_id (int, optional): The ID of the associated Debt instance for debt settlement.
+
+    Returns:
+        CashOut: The created CashOut transaction instance.
+
+    Raises:
+        ValueError: If expense_id corresponds to an existing Expense with user_id 0 but settled_debt is not provided.
+        ValueError: If the debt is already paid.
+        ValueError: If the paid amount exceeds the debt amount.
+    """
+    from models import Expense, CashOut, Debt
+
+    if expense_id and expense_id != 0:
+        expense = Expense.query.get(expense_id)
+        if expense and expense.user_id == 0:
+            if not settled_debt_id:
+                raise ValueError("For debt payment transactions, settled_debt must be provided.")
+
+            # Query the debt being paid by its ID
+            debt_to_pay = Debt.query.get(settled_debt_id)
+            if not debt_to_pay:
+                raise ValueError("Invalid debt ID provided for settlement.")
+
+            if debt_to_pay.is_paid:
+                raise ValueError("The debt is already paid.")
+
+            if debt_to_pay.amount_payed + amount > debt_to_pay.amount:
+                raise ValueError("Paid amount exceeds the debt amount.")
+
+            # Add cash out with all fields populated
+            cash_out = CashOut(
+                user_id=user_id,
+                amount=amount,
+                date=date,
+                expense_id=expense_id,
+                description=description,
+                settled_debt_id=settled_debt_id)
+
+            try:
+                db.session.add(cash_out)
+                db.session.commit()
+
+                # Update the debt being paid by this transaction
+                debt_to_pay.amount_payed += amount
+
+                # If paid amount equals or exceeds debt amount, mark the debt as paid
+                if debt_to_pay.amount_payed >= debt_to_pay.amount:
+                    debt_to_pay.is_paid = True
+
+                db.session.commit()
+
+            except Exception as e:
+                db.session.rollback()
+                return str(e)
+
+            return cash_out
+
+    cash_out = CashOut(
+        user_id=user_id,
+        amount=amount,
+        date=date,
+        expense_id=expense_id,
+        description=description,
+        settled_debt_id=None
+    )
+
+    try:
+        db.session.add(cash_out)
+        db.session.commit()
+        return cash_out
+    except Exception as e:
+        db.session.rollback()
+        return str(e)
+
