@@ -61,6 +61,21 @@ def login():
             return redirect(url_for('dashboard', username=username))  
         else:
             flash('Invalid email or password.', 'danger')
+
+# User logout
+@app.route('/logout')
+@login_required
+def logout():
+    """
+    Log out the current user.
+
+    Returns:
+        redirect: Redirects the user to the home page.
+    """
+    logout_user()
+    flash('Logged out successfully.', 'info')
+    return redirect(url_for('home'))
+
     
     return render_template('login.html', form=form)
 
