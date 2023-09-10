@@ -160,4 +160,35 @@ class CashOut(db.Model):
     def __repr__(self):
         return f"<CashOut {self.amount} on {self.date}>"
 
+class Budget(db.Model):
+    """
+    Represents a budget for a specific month and year with its associated expenses.
+
+    Attributes:
+        id (int): The unique identifier for the budget.
+        user_id (int): The foreign key referencing the associated User.
+        year (int): The year of the budget.
+        month (int): The month of the budget.
+         budget_expenses (relationship): One-to-many relationship with BudgetExpense.
+         
+    Constraints:
+        Unique constraint on user_id and month.
+    
+    Methods:
+        __repr__: Returns a string representation of the Budget object.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    month = db.Column(db.Integer, nullable=False)
+
+    # Add a unique constraint on user_id and month
+    __table_args__ = (db.UniqueConstraint('user_id', 'year', 'month', name='_user_month_uc'),)
+
+    expenses = db.relationship('BudgetExpense', back_populates='budget', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f"<Budget {self.year}-{self.month} for User {self.user_id}>"
+
 
