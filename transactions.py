@@ -38,6 +38,39 @@ def add_income(user_id, income_name, income_type_id):
         db.session.rollback()
         return str(e)
 
+def add_expense(user_id, expense_name):
+    """
+    Add an expense category for a user.
+
+    Args:
+        user_id (int): The user's ID.
+        expense_name (str): The name of the expense transaction.
+
+    Returns:
+        bool/str: True if addition is successful, otherwise an error message.
+
+    """
+    from models import Expense
+
+    # Convert expense_name to title case and remove leading/trailing whitespace
+    expense_name = expense_name.strip().title()
+    
+    # Check if the expense already exists
+    existing_expense = Expense.query.filter_by(user_id=user_id, name=expense_name).first()
+    if existing_expense:
+        return "Expense transaction already exists."
+    
+    # Create a new expense transaction instance
+    expense = Expense(user_id=user_id, name=expense_name)
+
+    try:
+        db.session.add(expense)
+        db.session.commit()
+        return expense
+    except Exception as e:
+        db.session.rollback()
+        return str(e)
+
 def calculate_income_totals(user_id, start_date=None, end_date=None):
     """
     Calculate the total income amounts for each income category of a user within a specified date range.
