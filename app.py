@@ -814,6 +814,97 @@ def create_expense_transaction():
         # Handle other errors
         return jsonify({'error': 'An error occurred while creating the income transaction'}), 500
 
+
+@app.route('/search_expense_transactions', methods=['GET'])
+@login_required
+def search_expense_transactions():
+    '''
+    Search Expense transactions by date
+    '''
+    user_id = current_user.id 
+    start_date_str = request.args.get('from')
+    end_date_str = request.args.get('to')
+
+    try:
+        # Convert date strings to date objects with 'yyyy-mm-dd' format
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        total_expense, individual_expenses = calculate_total_expenses_between_dates(
+            user_id, start_date, end_date
+        )
+
+        # Query the contribution of each category to the user's total expense
+        expense_totals = calculate_expense_totals(current_user.id, start_date, end_date)
+
+        '''
+        Include credit as a category that contributes to expense
+        '''
+        # Query unique creditor names for the current user
+        creditor_names = (
+            db.session.query(Debt.creditor)
+            .filter_by(user_id=current_user.id)
+            .distinct()
+            .all()
+        )
+
+        # Extract the creditor names from the query result
+        unique_creditors = [creditor[0] for creditor in creditor_names]
+
+        # Calculate the sum of amount_payed to each creditor
+        creditor_totals = {}
+        for creditor_name in unique_creditors:
+            total_amount_payed = (
+                db.session.query(db.func.sum(Debt.amount_payed))
+                .filter_by(user_id=current_user.id, creditor=creditor_name)
+                .scalar()
+            )
+            if total_amount_payed is None:
+                total_amount_payed = 0
+            creditor_totals[creditor_name] = total_amount_payed
+
+        # Calculate the sum of all amount_payed values in the creditor_totals dictionary
+        total_credit_amount = sum(creditor_totals.values())
+
+        # Add the total_credit_amount to the expense_totals dictionary with 'Credit' as the key
+        expense_totals['Credit'] = total_credit_amount
+    
+
+        # Initialize a dictionary to store formatted amounts and percentages
+        formatted_expense_totals = {}
+
+        # Calculate the total income
+        total_expense = sum(expense_totals.values())
+
+        # Format the amount values and update the expense_totals dictionary
+        for category, amount in expense_totals.items():
+            formatted_amount = "{:,.2f}/=".format(amount)
+            try:
+                percentage = "{:.2f}".format((amount / total_expense) * 100)
+            except ZeroDivisionError:
+                percentage = "{:.2f}".format(0)
+            formatted_expense_totals[category] = (formatted_amount, percentage)
+
+        # Replace the original expense_totals dictionary with the formatted one
+        expense_totals = formatted_expense_totals
+
+
+        print(total_expense)
+        print(individual_expenses)
+        print(expense_totals)
+        response_data = {
+            'total_expense': str(total_expense),
+            'individual_expenses': individual_expenses,
+            'expense_totals': expense_totals
+        }
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+
  
 
 
