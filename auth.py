@@ -25,3 +25,22 @@ def register_user(first_name, last_name, password, email):
     except Exception as e:
         db.session.rollback()
         return str(e)
+
+def authenticate_user(email, password):
+    """
+    Authenticate a user.
+
+    Args:
+        username (str): The username of the user.
+        password (str): The password provided by the user.
+
+    Returns:
+        User/None: The authenticated User object if successful, otherwise None.
+
+    """
+    from models import User
+
+    user = User.query.filter_by(email=email).first()
+    if user and check_password_hash(user.password, password):
+        return user
+    return None
