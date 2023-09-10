@@ -218,4 +218,41 @@ class BudgetExpense(db.Model):
     def __repr__(self):
         return f"<BudgetExpense budget_id={self.budget_id}, expense_id={self.expense_id}>"
 
+class Debt(db.Model):
+    """
+    Represents a debt transaction associated with a user. You owe money
+
+    Attributes:
+        id (int): The unique identifier for the debt transaction.
+        user_id (int): The foreign key referencing the associated User.
+        creditor (str): The name of the creditor.
+        amount (float): The amount of the debt.
+        date (date): The date of the debt transaction.
+        description (str): A description of the debt.
+        date_due (date): The date when the debt is due to be paid.
+        is_paid (bool): Indicates whether the debt has been paid (True) or not (False).
+        amount_payed (float): The amount of the debt that has been paid.
+        cash_out_transactions (relationship): One-to-many relationship with CashOut.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    creditor = db.Column(db.String(100), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    description = db.Column(db.String(200), nullable=True)
+    date_due = db.Column(db.Date, nullable=True)
+    is_paid = db.Column(db.Boolean, default=False)
+    amount_payed = db.Column(db.Numeric(10, 2), default=0.0)
+
+    cash_out_transactions = db.relationship('CashOut', back_populates='settled_debt', cascade='all')
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'creditor', name='_user_creditor_uc'),
+    )
+
+
+    def __repr__(self):
+        return f"<Debt {self.amount} to {self.creditor} on {self.date}>"
+
 
