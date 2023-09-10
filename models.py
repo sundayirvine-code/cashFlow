@@ -291,4 +291,31 @@ class Credit(db.Model):
     def __repr__(self):
         return f"<Credit {self.amount} from {self.debtor} on {self.date}>"
 
+def initialize_default_income_types():
+    """
+    Initialize default income types and global categories.
+    Returns:
+        None
+    """
+    default_income_types = [
+        {'name': 'Earned Income'},
+        {'name': 'Passive Income'},
+        {'name': 'Portfolio Income'}
+    ]
+
+    for income_type_data in default_income_types:
+        income_type = IncomeType.query.filter_by(name=income_type_data['name']).first()
+        if not income_type:
+            income_type = IncomeType(**income_type_data)
+            db.session.add(income_type)
+    db.session.commit()
+
+    from transactions import add_expense, add_income
+
+    # Create "Credit" expense category
+    add_expense(0, 'Credit')
+
+    # Create "Debt" Income category
+    add_income(0, 'Debt', 3)
+
 
