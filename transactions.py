@@ -401,7 +401,7 @@ def add_cash_out_transaction(user_id, amount, date, expense_id, description=None
     """
     from models import Expense, CashOut, Debt
 
-    if expense_id and expense_id != 0:
+    if expense_id:
         expense = Expense.query.get(expense_id)
         if expense and expense.user_id == 0:
             if not settled_debt_id:
@@ -463,3 +463,87 @@ def add_cash_out_transaction(user_id, amount, date, expense_id, description=None
         db.session.rollback()
         return str(e)
 
+def add_cash_in_transaction(user_id, amount, date, income_id, description=None, settled_credit_id=None):
+    """
+    Add a CashIn transaction to the database.
+
+    Args:
+        user_id (int): The user's ID associated with the transaction.
+        amount (float): The amount of the cash inflow.
+        date (date): The date of the transaction.
+        income_id (int): The ID of the associated income.
+        description (str, optional): A description of the transaction.
+        settled_credit_id (int, optional): The ID of the associated Credit instance for credit settlement.
+
+    Returns:
+        CashIn: The created CashIn transaction instance.
+
+    Raises:
+        ValueError: If income_id corresponds to an existing Income with user_id 0 but settled_credit is not provided.
+        ValueError: If the credit is already settled.
+        ValueError: If the received amount exceeds the credit amount.
+    """
+    from models import Income, CashIn, Credit
+
+    if income_id:
+        income = Income.query.get(income_id)
+        if income and income.user_id == 0:
+            if not settled_credit_id:
+                raise ValueError("For credit settlement transactions, settled_credit_id must be provided.")
+
+            # Query the credit being settled by its ID
+            credit_to_settle = Credit.query.get(settled_credit_id)
+            if not credit_to_settle:
+                raise ValueError("Invalid credit ID provided for settlement.")
+
+            if credit_to_settle.is_paid:
+                raise ValueError("The credit is already settled.")
+
+            if credit_to_settle.amount_payed + amount > credit_to_settle.amount:
+                raise ValueError("Received amount exceeds the credit amount.")
+
+            # Add cash in with all fields populated
+            cash_in = CashIn(
+                user_id=user_id,
+                amount=amount,
+                date=date,
+                income_id=income_id,
+                description=description,
+                settled_credit_id=settled_credit_id
+            )
+
+            try:
+                db.session.add(cash_in)
+                db.session.commit()
+
+                # Update the credit being settled by this transaction
+                credit_to_settle.amount_payed += amount
+
+                # If received amount equals or exceeds credit amount, mark the credit as settled
+                if credit_to_settle.amount_payed >= credit_to_settle.amount:
+                    credit_to_settle.is_paid = True
+
+                db.session.commit()
+
+            except Exception as e:
+                db.session.rollback()
+                return str(e)
+
+            return cash_in
+
+    cash_in = CashIn(
+        user_id=user_id,
+        amount=amount,
+        date=date,
+        income_id=income_id,
+        description=description,
+        settled_credit_id=None
+    )
+
+    try:
+        db.session.add(cash_in)
+        db.session.commit()
+        return cash_in
+    except Exception as e:
+        db.session.rollback()
+        return str(e)
