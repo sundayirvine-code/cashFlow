@@ -42,3 +42,15 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(), Length(min=8), Regexp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]*$', message='Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character.')],
                              render_kw={"autocomplete": "off", "class": "form-control", "placeholder": "Password", "aria-label": "Password"})
     submit = SubmitField('Log In', render_kw={"class": "btn btn-primary", "id": "registration-submit-button"})
+
+class IncomeCategoryForm(FlaskForm):
+    """
+    Represents a form for adding an income category.
+
+    Attributes:
+        categoryName (StringField): Field for entering the category name.
+        incomeType (SelectField): Dropdown for choosing an income type.
+    """
+    
+    categoryName = StringField('Category Name', validators=[DataRequired()])
+    incomeType = SelectField('Choose Income Type', coerce=int)
