@@ -93,11 +93,11 @@
                 <!-- Expense transactions will be inserted here -->
                 {% for expense_transaction in expense_transactions %}
                 <tr>
-                    <td>{{ expense_transaction['transaction_id'] }}</td> <!-- Use loop.index to get the current index (1-based) -->
-                    <td>{{ expense_transaction['expense_category_name'] }}</td> <!-- Display the income category name -->
-                    <td>{{ expense_transaction['description'] }}</td> <!-- Display the description -->
-                    <td>{{ expense_transaction['date'] }}</td> <!-- Display the date -->
-                    <td class="income_amount_cell">{{ expense_transaction['amount'] }}</td> <!-- Display the amount -->
+                    <td>{{ expense_transaction['transaction_id'] }}</td> 
+                    <td>{{ expense_transaction['expense_category_name'] }}</td>
+                    <td>{{ expense_transaction['description'] }}</td>
+                    <td>{{ expense_transaction['date'] }}</td>
+                    <td class="income_amount_cell">{{ expense_transaction['amount'] }}</td>
                     <td class="actions">
                         <!-- Edit and Delete buttons with appropriate data attributes -->
                         <i class="fas fa-edit edit-transaction"
@@ -128,15 +128,13 @@
 <div id="modal-edit" style="display: none;">
     <div class="row g-3">              
         <div class="col-md-6">
-            <label for="Editamount">Edit Amount</label>           
-            <input class="form-control" id="Edit_amount" name="Edit_amount" placeholder="Enter Amount" required type="number" min="0" value="">           
-        </div>
-
-        <div class="col-md-6">
             <label for="Editdate">Date</label>
             <input class="form-control" id="Editdate" name="Editdate" placeholder="Edit transaction Date" required type="date">                   
         </div>        
-
+        <div class="col-md-6">
+            <label for="Editamount">Edit Amount</label>           
+            <input class="form-control" id="Editamount" name="Editamount" placeholder="Enter Amount" required type="number" min="0">           
+        </div>
         <div class="col-md-12">
             <label for="Editdescription">Description (optional)</label>
             <textarea class="form-control" id="Editdescription" name="Editdescription" placeholder="Edit Description Here" maxlength="100"></textarea>               
