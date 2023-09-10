@@ -568,10 +568,154 @@ def search_income_transactions():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+# Expense Magement ------------------------------------------------------------------------
+@app.route('/expense', methods=['GET', 'POST'])
+@login_required
+def expense():
+    if request.method == 'GET':
 
+        # Query Income categories for the current user and Populate the incomeCategory field
+        expense_categories = Expense.query.filter_by(user_id=current_user.id).all()
+        expense_categories.insert(0, Expense(id=1, user_id=0, name='Credit'))
 
+        # Query the contribution of each category to the user's total expense
+        expense_totals = calculate_expense_totals(current_user.id)
 
+        '''
+        Include credit as a category that takes out Income
+        '''
+        # Query unique creditor names for the current user
+        creditor_names = (
+            db.session.query(Debt.creditor)
+            .filter_by(user_id=current_user.id)
+            .distinct()
+            .all()
+        )
 
- 
+        # Extract the debtor names from the query result
+        unique_creditors = [debtor[0] for debtor in creditor_names]
+
+        # Calculate the sum of amount_payed to each creditor
+        creditor_totals = {}
+        for creditor_name in unique_creditors:
+            total_amount_payed = (
+                db.session.query(db.func.sum(Debt.amount_payed))
+                .filter_by(user_id=current_user.id, creditor=creditor_name)
+                .scalar()
+            )
+            if total_amount_payed is None:
+                total_amount_payed = 0
+            creditor_totals[creditor_name] = total_amount_payed
+
+        # Calculate the sum of all amount_payed values in the creditor_totals dictionary
+        total_debt_amount = sum(creditor_totals.values())
+
+        # Add the total_credit_amount to the expense_totals dictionary with 'Credit' as the key
+        expense_totals['Credit'] = total_debt_amount
     
+
+        # Initialize a dictionary to store formatted amounts and percentages
+        formatted_expense_totals = {}
+
+        # Calculate the total income
+        total_expense = sum(expense_totals.values())
+
+        # Format the amount values and update the income_totals dictionary
+        for category, amount in expense_totals.items():
+            formatted_amount = "{:,.2f}/=".format(amount)
+            try:
+                percentage = "{:.2f}".format((amount / total_expense) * 100)
+            except ZeroDivisionError:
+                percentage = "{:.2f}".format(0)
+            formatted_expense_totals[category] = (formatted_amount, percentage)
+
+        # Replace the original income_totals dictionary with the formatted one
+        expense_totals = formatted_expense_totals
+
+        print(expense_totals)
+
+        # Call the calculate_total_income_between_dates function
+        total_expenses, individual_expenses = calculate_total_expenses_between_dates(current_user.id)
+
+        # Prepare the data in the desired format
+        expense_transactions = [
+            {
+                'transaction_id': exp['id'],
+                'expense_category_name': exp['name'],
+                'description': exp['description'],
+                'date': exp['date'].strftime('%Y-%m-%d'),
+                'amount': "{:,.2f}/=".format(exp['amount']), 
+            }
+            for index, exp in enumerate(individual_expenses)
+        ]
+
+        # Get the beginning of the month and current date in the desired format
+        today = date.today()
+        start_of_month = date(today.year, today.month, 1)
+        from_date_formatted = start_of_month.strftime('%b %d, %Y')
+        to_date_formatted = today.strftime('%b %d, %Y')
+
+        print(expense_transactions)
+        # Load the expense trmplate
+        return render_template('expense.html', 
+                               expense_categories = expense_categories,
+                               expense_totals = expense_totals,
+                               expense_transactions = expense_transactions, 
+                               total_expenses = "{:,.2f}/=".format(total_expenses),
+                               from_date=from_date_formatted,
+                               to_date=to_date_formatted
+                               )
+    else:
+        '''
+        Filter Income transactions by category
+        '''
+        try:
+            # Handle AJAX POST request to retrieve transactions by category
+            category_name = request.json.get('category_name')
+            print(category_name)
+
+            user_id = current_user.id
+
+            # Find the expense category ID for the given category name and current user
+            if   category_name == 'Credit':
+                expense_category = Expense.query.filter_by(user_id=0, name=category_name).first()
+                print(expense_category)
+            else:
+                expense_category = Expense.query.filter_by(user_id=user_id, name=category_name).first()
+
+            if expense_category:
+                if category_name == 'Credit':
+                    expense_category_id = 1
+
+                else:
+                    expense_category_id = expense_category.id
+
+                print(expense_category_id)
+
+                # Query CashOut transactions for the specified expense category ID and user ID
+                transactions = CashOut.query.filter_by(expense_id=expense_category_id, user_id=user_id).all()
+
+                total_expenses = 0
+
+                # Extract the required fields from the transactions
+                transaction_data = []
+                for transaction in transactions:
+                    transaction_data.append({
+                        'id': transaction.id,
+                        'category': category_name,
+                        'amount': "{:,.2f}/=".format(float(transaction.amount)),
+                        'date': transaction.date.strftime('%Y-%m-%d'),
+                        'description': transaction.description
+                    })
+                    total_expenses += transaction.amount
+
+                return jsonify({'transactions': transaction_data,
+                                'total_expenses':"{:,.2f}/=".format(total_expenses)
+                                })
+            
+            else:
+                return jsonify({'error': 'Category not found for the current user'}), 404
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
 
