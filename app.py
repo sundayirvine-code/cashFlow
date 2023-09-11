@@ -118,7 +118,6 @@ def logout():
 
 @app.route('/chart_data', methods=['POST'])
 def chart_data():
-    # Calculate and format your chart data
     # Expense Chart
     expense_percentages, total_expense_percent_of_income = calculate_expense_percentage_of_income(current_user.id)
 
@@ -133,11 +132,82 @@ def chart_data():
     values = [expense[1] for expense in top_expenses] + [remaining_percentage]
 
     colors = ['#ffb65d', '#465bca', '#9d3171', '#3eeed0', '#ff5497']
-    chart_data = {
+    expense_chart_data = {
         'labels': labels,
         'values': values,
         'colors': colors,
     }
+
+
+    # Income chart
+    # Query the contribution of each category to the user's total income
+    income_totals = calculate_income_totals(current_user.id)
+
+    '''
+    Include debt as a category that brings in Income
+    '''
+    # Query unique debtor names for the current user
+    debtor_names = (
+        db.session.query(Credit.debtor)
+        .filter_by(user_id=current_user.id)
+        .distinct()
+        .all()
+    )
+
+    # Extract the debtor names from the query result
+    unique_debtors = [debtor[0] for debtor in debtor_names]
+
+
+    '''
+    COME BACK HERE WHEN DEALING WITH DEBT
+    '''
+    # Calculate the sum of amount_payed for each debtor
+    debtor_totals = {}
+    for debtor_name in unique_debtors:
+        total_amount_payed = (
+            db.session.query(db.func.sum(Credit.amount_payed))
+            .filter_by(user_id=current_user.id, debtor=debtor_name)
+            .scalar()
+        )
+        if total_amount_payed is None:
+            total_amount_payed = 0
+        debtor_totals[debtor_name] = total_amount_payed
+
+    # Calculate the sum of all amount_payed values in the debtor_totals dictionary
+    total_debt_amount = sum(debtor_totals.values())
+
+    # Add the total_debt_amount to the income_totals dictionary with 'Debt' as the key
+    income_totals['Debt'] = total_debt_amount
+  
+
+    # Calculate the total income
+    total_income = sum(income_totals.values())
+
+    # Initialize lists to store labels, values, and colors for the income chart
+    income_labels = []
+    income_values = []
+    income_colors = ['#ffb65d', '#465bca', '#9d3171', '#3eeed0', '#ff5497']
+
+    income_chart_data = {
+        'labels': income_labels,
+        'values': income_values,
+        'colors': income_colors,
+    }
+
+    # Format the amount values and update the income_totals dictionary
+    for category, amount in income_totals.items():
+        try:
+            percentage = "{:.2f}".format((amount / total_income) * 100)
+        except ZeroDivisionError:
+            percentage = "{:.2f}".format(0)
+        income_labels.append(category)
+        income_values.append(percentage)
+
+    chart_data = {
+        'expense_chart_data': expense_chart_data,
+        'income_chart_data': income_chart_data
+    }
+
     return jsonify(chart_data)
 
 @login_required

@@ -102,8 +102,8 @@
 }
 
 #transactionHistoryBox{
-    max-height: calc(100vh - 340px);
-    min-height: calc(100vh - 340px);
+    max-height: calc(100vh - 315px);
+    min-height: calc(100vh - 315px);
     gap: 6px;
 }
 

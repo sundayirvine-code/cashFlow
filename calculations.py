@@ -182,3 +182,6 @@ def calculate_expense_percentage_of_income(user_id, start_date=None, end_date=No
     expense_percentages = sorted(expense_percentages.items(), key=lambda x: x[1], reverse=True)
 
     return expense_percentages, total_expense_percent_of_income
+
+
+
