@@ -3,6 +3,7 @@
 {% block links %}
     <link rel="stylesheet" href="/static/styles/dashboard.css">
     <link rel="stylesheet" href="/static/styles/hamburger.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block title %}CashFlow | Dashboard{% endblock %}
@@ -79,15 +80,17 @@
         <main id="main">
             <div id="chartbox">
                 <div id="incomeChart">
-
+                    
                 </div>
-                <div id="expenseChart">
 
+                <div id="expenseChart">
+                    
                 </div>
                 <div id="extraChart">
 
                 </div>
             </div>
+            <p style="font-size: 12px; margin: 0;">Summary</p>
             <div id="incomeExpenseBalanceBox">
                 <div id="incomeBox">
                     <p>Current Income</p>
@@ -103,7 +106,7 @@
                 </div>
             </div>
             <div id="transactionHistoryBox">
-                <p>Overview</p>
+                <p style="font-size: 12px;">Overview</p>
                 <div id="transactionBox">
                     <div id="transactionTable">
                         <table class="table table-responsive" id="table">
@@ -142,4 +145,5 @@
             </div>
         </main>
     </div>
+    <script src="/static/script/dashboard.js"></script>
 {% endblock %}

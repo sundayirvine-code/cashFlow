@@ -2,12 +2,12 @@
 #3f4573 background progress bar
 
 // progress bar/ text colors
-#465bca
+#465bca Blue
 #ffb65d orange
-#9d3171
-#ff5497
-#3f46a3
-#3eeed0
+#9d3171 purple
+#ff5497 reddish
+#3f46a3 Blue
+#3eeed0 blue green
 #3a6ce2 buttons blue
 #bfd220 notification, cash in green,
 #f5599a Cashout red, errors

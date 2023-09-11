@@ -41,7 +41,8 @@ def calculate_total_income_between_dates(user_id, start_date=None, end_date=None
             'name': income.name,
             'description': cash_in.description,
             'id': cash_in.id,
-            'income_type': income_type.name
+            'income_type': income_type.name,
+            'type': 'Income',
         })
     
     total_income = Decimal(total_income).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
@@ -87,6 +88,7 @@ def calculate_total_expenses_between_dates(user_id, start_date=None, end_date=No
             'name': expense.name,
             'description': cash_out.description,
             'id': cash_out.id, 
+            'type': 'Expense',
         })
 
     total_expenses = Decimal(total_expenses).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
@@ -176,5 +178,7 @@ def calculate_expense_percentage_of_income(user_id, start_date=None, end_date=No
     total_expense_percent_of_income = (total_expenses / total_income) * 100 if total_income != 0 else 0
 
     total_expense_percent_of_income = round(total_expense_percent_of_income, 2)
+    # Sort expenses by percentage in descending order
+    expense_percentages = sorted(expense_percentages.items(), key=lambda x: x[1], reverse=True)
 
     return expense_percentages, total_expense_percent_of_income

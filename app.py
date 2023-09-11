@@ -5,7 +5,10 @@ from models import db, initialize_default_income_types, User, Income, IncomeType
 from flask_login import login_required, logout_user, LoginManager, login_user, current_user
 from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction
 from datetime import date, datetime
-from calculations import calculate_total_income_between_dates, calculate_total_expenses_between_dates
+from calculations import calculate_total_income_between_dates, calculate_total_expenses_between_dates, calculate_expense_percentage_of_income
+import plotly.graph_objs as go
+import plotly.express as px
+
 
 
 # Configuration
@@ -113,8 +116,32 @@ def logout():
     flash('Logged out successfully.', 'info')
     return redirect(url_for('home'))
 
+@app.route('/chart_data', methods=['POST'])
+def chart_data():
+    # Calculate and format your chart data
+    # Expense Chart
+    expense_percentages, total_expense_percent_of_income = calculate_expense_percentage_of_income(current_user.id)
+
+        # Extract the top 4 expenses and their percentages
+    top_expenses = expense_percentages[:4]
+
+    # Sum the percentages of the remaining expenses
+    remaining_percentage = sum(x[1] for x in expense_percentages[4:])
+
+    # Create labels and values for the chart
+    labels = [expense[0] for expense in top_expenses] + ['Others']
+    values = [expense[1] for expense in top_expenses] + [remaining_percentage]
+
+    colors = ['#ffb65d', '#465bca', '#9d3171', '#3eeed0', '#ff5497']
+    chart_data = {
+        'labels': labels,
+        'values': values,
+        'colors': colors,
+    }
+    return jsonify(chart_data)
+
 @login_required
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET'])
 def dashboard():
     """
     Render the user's Dashboard.
@@ -130,11 +157,9 @@ def dashboard():
 
         # Calculate total income and individual income transactions for the current month
         total_income, income_transactions = calculate_total_income_between_dates(user_id)
-        income_transactions = [{'type': 'Income', **transaction} for transaction in income_transactions]
 
         # Calculate total expenses and individual expense transactions for the current month
         total_expenses, expense_transactions = calculate_total_expenses_between_dates(user_id)
-        expense_transactions = [{'type': 'Expense', **transaction} for transaction in expense_transactions]
 
         # Merge income and expense transactions, and sort them by date
         all_transactions = income_transactions + expense_transactions
@@ -143,13 +168,15 @@ def dashboard():
         # Calculate total balance
         total_balance = total_income - total_expenses
 
-        # Merge income and expense transactions, and sort them by date
-        all_transactions = income_transactions + expense_transactions
-        all_transactions.sort(key=lambda x: x['date'])
+        
 
-        print(all_transactions)
 
-        return render_template('dashboard.html', total_income=total_income, total_expenses=total_expenses, total_balance=total_balance, transactions=all_transactions, username=user)
+        return render_template('dashboard.html', 
+                               total_income=total_income, 
+                               total_expenses=total_expenses, 
+                               total_balance=total_balance, 
+                               transactions=all_transactions, 
+                               username=user)
     else:
         return redirect(url_for('login'))
 
