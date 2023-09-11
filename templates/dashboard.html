@@ -90,19 +90,20 @@
             </div>
             <div id="incomeExpenseBalanceBox">
                 <div id="incomeBox">
-                    {{total_income}}
+                    <p>Current Income</p>
+                    <div style="color: #bfd220;">{{"{:,.2f}/=".format(total_income)}}</div>
                 </div>
                 <div id="expenseBox">
-                    {{total_expenses}}
+                    <p>Current Expenditure</p>
+                    <div style="color: #f5599a;">{{"{:,.2f}/=".format(total_expenses)}}</div>
                 </div>
                 <div id="balanceBox">
-                    {{total_balance}}   
-                </div>
-                <div id="calendarBox">
-
+                    <p>Current Balance</p>
+                    <div style="color:{% if total_balance > 0 %}#bfd220{% else %}#f5599a{% endif %} ;">{{"{:,.2f}/=".format(total_balance)}} </div>  
                 </div>
             </div>
             <div id="transactionHistoryBox">
+                <p>Overview</p>
                 <div id="transactionBox">
                     <div id="transactionTable">
                         <table class="table table-responsive" id="table">
