@@ -510,7 +510,7 @@ def search_income_transactions():
 def expense():
     if request.method == 'GET':
 
-        # Query Income categories for the current user and Populate the incomeCategory field
+        # Query Income categories for the current user
         expense_categories = Expense.query.filter_by(user_id=current_user.id).all()
         expense_categories.insert(0, Expense(id=1, user_id=0, name='Credit'))
 
@@ -578,6 +578,7 @@ def expense():
             {
                 'transaction_id': exp['id'],
                 'expense_category_name': exp['name'],
+                'expense_category_id': exp['expense_category_id'],
                 'description': exp['description'],
                 'date': exp['date'].strftime('%Y-%m-%d'),
                 'amount': "{:,.2f}/=".format(exp['amount']), 
@@ -750,7 +751,6 @@ def create_expense_transaction():
         # Handle other errors
         return jsonify({'error': 'An error occurred while creating the income transaction'}), 500
 
-
 @app.route('/search_expense_transactions', methods=['GET'])
 @login_required
 def search_expense_transactions():
@@ -839,7 +839,105 @@ def search_expense_transactions():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+from flask import request, jsonify
+from datetime import datetime
 
+@app.route('/edit_expense_transaction', methods=['POST'])
+def edit_expense_transaction():
+    # Parse JSON data sent from the client (JavaScript)
+    data = request.get_json()
+
+    # Extract data from the JSON request
+    transaction_id = data.get('transaction_id')
+    new_date_str = data.get('new_date')  # Date as string
+    new_amount = data.get('new_amount')
+    new_description = data.get('new_description')
+    new_category_id = data.get('new_category_id')
+
+    print(transaction_id, new_description, new_date_str, new_amount, new_category_id)
+
+    # Perform validation checks
+
+    # Check if all required fields are provided
+    if not (new_date_str and new_amount and new_category_id):
+        return jsonify({'error': 'Please provide all required fields.'}), 400
+
+    # Convert new_date_str to a Python date object
+    try:
+        new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Please use YYYY-MM-DD format.'}), 400
+
+    # Check if the date is not in the future
+    if new_date > datetime.now().date():
+        return jsonify({'error': 'Please select a date that is not in the future.'}), 400
+
+    # Check if the amount is non-negative
+    if new_amount < 0:
+        return jsonify({'error': 'Please enter a non-negative amount.'}), 400
+
+    # Check if description is provided and not longer than 100 characters
+    if new_description:
+        if len(new_description) > 100:
+            return jsonify({'error': 'Description should not exceed 100 characters.'}), 400
+
+    # Query the database to ensure the transaction and category exist
+    transaction = CashOut.query.get(transaction_id)
+    if not transaction:
+        return jsonify({'error': 'Transaction not found.'}), 404
+
+    category = Expense.query.get(new_category_id)
+    if not category:
+        return jsonify({'error': 'Expense category not found.'}), 404
+
+    # Perform the edit operation on the transaction using the CashOut model
+    try:
+        transaction.update_transaction(new_description, new_amount, new_date, new_category_id)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Error editing the transaction.'}), 500
+    
+    new_category_name = Expense.query.get(transaction.expense_id).name
+
+    # Return the edited transaction details in the response
+    edited_transaction = {
+        'transaction_id': transaction.id,
+        'new_date': transaction.date.strftime('%Y-%m-%d'),
+        'new_amount': "{:,.2f}/=".format(transaction.amount),  # Format as float with two decimal places
+        'new_description': transaction.description,
+        'new_category_id': transaction.expense_id,
+        'new_category_name': new_category_name,
+    }
+
+    return jsonify({'message': 'Expense transaction updated successfully', 'edited_transaction': edited_transaction}), 200
+
+
+# Route to delete an expense transaction
+@app.route('/delete_expense_transaction', methods=['POST'])
+def delete_expense_transaction():
+    # Parse JSON data sent from the client (JavaScript)
+    data = request.get_json()
+
+    # Extract data from the JSON request
+    transaction_id = data.get('transaction_id')
+
+    # Query the database to find the transaction using CashOut model
+    transaction = CashOut.query.get(transaction_id)
+
+    if not transaction:
+        # Transaction not found, return an error response
+        return jsonify({'error': 'Transaction not found.'}), 404
+
+    try:
+        # Use the CashOut model method to delete the transaction
+        transaction.delete_transaction()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Error deleting the transaction.'}), 500
+
+    # Return a response indicating success
+    return jsonify({'message': 'Expense transaction deleted successfully'}), 200
 
 
 

@@ -1,4 +1,4 @@
-<!--templates/income.html-->
+<!--templates/expense.html-->
 {% extends "base.html" %}
 
 {% block links %}
@@ -92,7 +92,7 @@
             <tbody id="transactionTableBody">
                 <!-- Expense transactions will be inserted here -->
                 {% for expense_transaction in expense_transactions %}
-                <tr>
+                <tr data-row-id="{{ expense_transaction['transaction_id'] }}">
                     <td>{{ expense_transaction['transaction_id'] }}</td> 
                     <td>{{ expense_transaction['expense_category_name'] }}</td>
                     <td>{{ expense_transaction['description'] }}</td>
@@ -105,6 +105,8 @@
                            data-description="{{ expense_transaction['description'] }}"
                            data-amount="{{ expense_transaction['amount'] }}"
                            data-date="{{ expense_transaction['date'] }}"
+                           data-categoryname="{{ expense_transaction['expense_category_name'] }}"
+                           data-categoryId="{{ expense_transaction['expense_category_id'] }}"
                            aria-hidden="true"></i>
                         <i class="fas fa-trash-alt delete-transaction"
                            data-transaction-id="{{ expense_transaction['transaction_id'] }}"
@@ -118,6 +120,7 @@
     </div>
 </div>
 
+<!-- Delete confirmation modal -->
 <div id="modal-delete" style="display: none;">
     <p>Are you sure you want to delete this transaction?</p>
     <button id="modal-content-delete" class="btn btn-danger col-md-3">Delete</button>
@@ -135,6 +138,14 @@
             <label for="Editamount">Edit Amount</label>           
             <input class="form-control" id="Editamount" name="Editamount" placeholder="Enter Amount" required type="number" min="0">           
         </div>
+        <div class="col-md-6 ">      
+            <label for="editExpenseCategory">Choose Category</label>          
+            <select class="form-select" id="editExpenseCategory" name="ExpenseCategory">
+                {% for ec in expense_categories %} 
+                <option value="{{ec.id}}">{{ec.name}}</option>
+                {% endfor %}
+            </select>          
+        </div>
         <div class="col-md-12">
             <label for="Editdescription">Description (optional)</label>
             <textarea class="form-control" id="Editdescription" name="Editdescription" placeholder="Edit Description Here" maxlength="100"></textarea>               
@@ -146,6 +157,7 @@
     </div>
 </div>
 
+<!-- Display success messages -->
 <div id="successMessage"></div>
 
 <!-- Form to create an Expense transaction -->

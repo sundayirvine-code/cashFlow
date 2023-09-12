@@ -89,6 +89,7 @@ def calculate_total_expenses_between_dates(user_id, start_date=None, end_date=No
             'description': cash_out.description,
             'id': cash_out.id, 
             'type': 'Expense',
+            'expense_category_id': cash_out.expense_id
         })
 
     total_expenses = Decimal(total_expenses).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
