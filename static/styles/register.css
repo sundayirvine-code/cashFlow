@@ -33,11 +33,11 @@ body {
 }
 
 .success-messages {
-    background-color: #21d221; /* Green background color for success messages */
+    background-color: #309a6a; 
   }
   
   .error-messages {
-    background-color: #f95395; /* Red background color for error messages */
+    background-color: #f95395; 
   }
 
   .error-messages{

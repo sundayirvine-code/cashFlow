@@ -324,6 +324,11 @@
         height: 320px;
     }
 
+    #devText {
+        width: 95vw;
+    }
+
+
     .flip-card-inner {
     display: flex;
     align-items: center;

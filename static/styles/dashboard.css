@@ -157,18 +157,18 @@
 }
 
 /* Style the scrollbar track */
-#incomeExpenseBalanceBox::-webkit-scrollbar{
+#incomeExpenseBalanceBox::-webkit-scrollbar, #chartbox::-webkit-scrollbar {
     height: 5px;
   }
   
   /* Style the scrollbar thumb (the draggable part) */
-  #incomeExpenseBalanceBox::-webkit-scrollbar-thumb{
+  #incomeExpenseBalanceBox::-webkit-scrollbar-thumb, #chartbox::-webkit-scrollbar-thumb{
     background-color: #888; 
     border-radius: 6px;
   }
   
   /* Change the color of the scrollbar thumb on hover */
-  #incomeExpenseBalanceBox::-webkit-scrollbar-thumb:hover {
+  #incomeExpenseBalanceBox::-webkit-scrollbar-thumb:hover, #chartbox::-webkit-scrollbar-thumb:hover{
     background-color: #555;
   }
 
@@ -247,8 +247,12 @@
 
     .nav-text{
         display: none;
+        font-size: 15px;
     }
 
+    #pageLinks a:hover .nav-text {
+        display: inline;
+    }
 
     hr{
         display: none;
