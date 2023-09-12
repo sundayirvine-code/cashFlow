@@ -3,7 +3,7 @@ from auth import register_user, authenticate_user
 from forms import RegistrationForm, LoginForm, IncomeCategoryForm, IncomeTransactionForm
 from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut
 from flask_login import login_required, logout_user, LoginManager, login_user, current_user
-from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction
+from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction, calculate_income_totals_formatted_debt
 from datetime import date, datetime
 from calculations import calculate_total_income_between_dates, calculate_total_expenses_between_dates, calculate_expense_percentage_of_income
 import plotly.graph_objs as go
@@ -289,19 +289,21 @@ def income():
 
                 # Query CashIn transactions for the specified income category ID and user ID
                 transactions = CashIn.query.filter_by(income_id=income_category_id, user_id=user_id).all()
-
+                
+                total = 0
                 # Extract the required fields from the transactions
                 transaction_data = []
                 for transaction in transactions:
+                    total += transaction.amount
                     transaction_data.append({
                         'id': transaction.id,
                         'category': category_name,
-                        'amount': float(transaction.amount),
+                        'amount': "{:,.2f}/=".format(float(transaction.amount)),
                         'date': transaction.date.strftime('%Y-%m-%d'),
                         'description': transaction.description
                     })
 
-                return jsonify({'transactions': transaction_data})
+                return jsonify({'transactions': transaction_data, 'total': "{:,.2f}/=".format(total)})
             
             else:
                 return jsonify({'error': 'Category not found for the current user'}), 404
@@ -321,63 +323,7 @@ def income():
     income_categories.insert(0, Income(id=1, user_id=0, name='Debt'))
     transaction_form.incomeCategory.choices = [(ic.id, ic.name) for ic in income_categories]
 
-    # Query the contribution of each category to the user's total income
-    income_totals = calculate_income_totals(current_user.id)
-
-    '''
-    Include debt as a category that brings in Income
-    '''
-    # Query unique debtor names for the current user
-    debtor_names = (
-        db.session.query(Credit.debtor)
-        .filter_by(user_id=current_user.id)
-        .distinct()
-        .all()
-    )
-
-    # Extract the debtor names from the query result and Populate the debtor field
-    unique_debtors = [debtor[0] for debtor in debtor_names]
-    transaction_form.debtor.choices = [(debtor, debtor) for debtor in unique_debtors]
-
-    '''
-    COME BACK HERE WHEN DEALING WITH DEBT
-    '''
-    # Calculate the sum of amount_payed for each debtor
-    debtor_totals = {}
-    for debtor_name in unique_debtors:
-        total_amount_payed = (
-            db.session.query(db.func.sum(Credit.amount_payed))
-            .filter_by(user_id=current_user.id, debtor=debtor_name)
-            .scalar()
-        )
-        if total_amount_payed is None:
-            total_amount_payed = 0
-        debtor_totals[debtor_name] = total_amount_payed
-
-    # Calculate the sum of all amount_payed values in the debtor_totals dictionary
-    total_debt_amount = sum(debtor_totals.values())
-
-    # Add the total_debt_amount to the income_totals dictionary with 'Debt' as the key
-    income_totals['Debt'] = total_debt_amount
-  
-
-    # Initialize a dictionary to store formatted amounts and percentages
-    formatted_income_totals = {}
-
-    # Calculate the total income
-    total_income = sum(income_totals.values())
-
-    # Format the amount values and update the income_totals dictionary
-    for category, amount in income_totals.items():
-        formatted_amount = "{:,.2f}/=".format(amount)
-        try:
-            percentage = "{:.2f}".format((amount / total_income) * 100)
-        except ZeroDivisionError:
-            percentage = "{:.2f}".format(0)
-        formatted_income_totals[category] = (formatted_amount, percentage)
-
-    # Replace the original income_totals dictionary with the formatted one
-    income_totals = formatted_income_totals
+    income_totals = calculate_income_totals_formatted_debt(current_user.id)
 
     '''
     This info is used to porpulate the cards and forms
@@ -529,102 +475,6 @@ def create_income_transaction():
         # Handle other errors
         return jsonify({'error': 'An error occurred while creating the income transaction'}), 500
 
-@app.route('/manage_income_transaction/<int:transaction_id>', methods=['PUT', 'DELETE'])
-@login_required
-def manage_cash_in_transaction(transaction_id):
-    cash_in_transaction = CashIn.query.get(transaction_id)
-    print(cash_in_transaction, 'test 1')
-
-    if not cash_in_transaction:
-        return jsonify({'error': 'Transaction not found'}), 404
-
-    print('test 2: transaction available')
-    if request.method == 'PUT':
-        try:
-            # Get the data from the request JSON
-            data = request.get_json()
-            print(data, 'test 3 json data exists')
-            # Validate and extract the data
-            new_description = data.get('description', cash_in_transaction.description)
-            print(new_description, 'test 4 new description check')
-
-            new_amount = data.get('amount', cash_in_transaction.amount)
-            print(new_amount, 'test 5 new amount check')
-
-            new_date = data.get('date', cash_in_transaction.date)
-            print(new_date, 'test 6 new date check')
-
-            # Convert amount to appropriate data types (e.g., int, float)
-            try:
-                new_amount = float(new_amount)
-                print(new_amount, 'test 7 new amount data type check')
-            except ValueError:
-                return jsonify({'error': 'Invalid data provided'}), 400
-            
-            # Convert the date string to a Python date object
-            try:
-                new_date = datetime.strptime(new_date, '%Y-%m-%d').date()
-                print(new_description, 'test 8 new date data type check')
-            except ValueError:
-                return jsonify({'error': 'Invalid date provided'}), 400
-
-            if new_amount < 0:
-                print(new_amount, 'test 9 new amount less 0 check')
-                return jsonify({'error': 'Amount cannot be negative'}), 400
-
-            # Check if it's a debt payment
-            if cash_in_transaction.settled_credit_id is not None:
-                print(new_description, 'test 10 this is a debt payment check')
-                # Retrieve the associated Credit object
-                credit = Credit.query.get(cash_in_transaction.settled_credit_id)
-
-                if credit is None:
-                    print(credit, 'test 11 new credit to be settled is available check')
-                    return jsonify({'error': 'Associated credit not found'}), 400
-
-                # Check if the credit has been settled
-                if credit.is_paid:
-                    print(credit.is_paid, 'test 12 has the credit been paid already? check')
-                    return jsonify({'error': 'Credit has already been paid'}), 400
-
-                # Check if the new amount + amount_payed exceeds the credit amount
-                if new_amount + credit.amount_payed > credit.amount:
-                    print('test 13 Payment exceeds credit amount check')
-                    return jsonify({'error': 'Payment exceeds credit amount'}), 400
-
-                # Update the amount_payed field of the credit
-                credit.amount_payed += new_amount
-
-                # Mark the credit as paid if the amount_payed equals the credit amount
-                if credit.amount_payed == credit.amount:
-                    credit.is_paid = True
-
-            # Call the update_transaction method
-            cash_in_transaction.update_transaction(new_description, new_amount, new_date)
-
-            # Format the date as 'yyyy-mm-dd'
-            formatted_date = cash_in_transaction.date.strftime('%Y-%m-%d')
-
-            # Create a dictionary with the updated data
-            updated_data = {
-                'message': 'Transaction updated successfully',
-                'id': cash_in_transaction.id,
-                'description': cash_in_transaction.description,
-                'amount': cash_in_transaction.amount,
-                'date': formatted_date,
-            }
-
-            return jsonify({'data': updated_data})
-
-        except Exception as e:
-            print('test 14 something else is wrong')
-            return jsonify({'error': 'Invalid data format'}), 400
-
-    elif request.method == 'DELETE':
-        # Call the delete_transaction method
-        cash_in_transaction.delete_transaction()
-        return jsonify({'message': 'Transaction deleted successfully'})
-
 @app.route('/search_income_transactions', methods=['GET'])
 @login_required
 def search_income_transactions():
@@ -640,64 +490,8 @@ def search_income_transactions():
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
 
-        total_income, individual_incomes = calculate_total_income_between_dates(
-            user_id, start_date, end_date
-        )
-
-        # Query the contribution of each category to the user's total income
-        income_totals = calculate_income_totals(current_user.id, start_date, end_date)
-
-        '''
-        Include debt as a category that brings in Income
-        '''
-        # Query unique debtor names for the current user
-        debtor_names = (
-            db.session.query(Credit.debtor)
-            .filter_by(user_id=current_user.id)
-            .distinct()
-            .all()
-        )
-
-        # Extract the debtor names from the query result and Populate the debtor field
-        unique_debtors = [debtor[0] for debtor in debtor_names]
-
-        # Calculate the sum of amount_payed for each debtor
-        debtor_totals = {}
-        for debtor_name in unique_debtors:
-            total_amount_payed = (
-                db.session.query(db.func.sum(Credit.amount_payed))
-                .filter_by(user_id=current_user.id, debtor=debtor_name)
-                .scalar()
-            )
-            if total_amount_payed is None:
-                total_amount_payed = 0
-            debtor_totals[debtor_name] = total_amount_payed
-
-        # Calculate the sum of all amount_payed values in the debtor_totals dictionary
-        total_debt_amount = sum(debtor_totals.values())
-
-        # Add the total_debt_amount to the income_totals dictionary with 'Debt' as the key
-        income_totals['Debt'] = total_debt_amount
-    
-
-        # Initialize a dictionary to store formatted amounts and percentages
-        formatted_income_totals = {}
-
-        # Calculate the total income
-        total_income = sum(income_totals.values())
-
-        # Format the amount values and update the income_totals dictionary
-        for category, amount in income_totals.items():
-            formatted_amount = "{:,.2f}/=".format(amount)
-            try:
-                percentage = "{:.2f}".format((amount / total_income) * 100)
-            except ZeroDivisionError:
-                percentage = "{:.2f}".format(0)
-            formatted_income_totals[category] = (formatted_amount, percentage)
-
-        # Replace the original income_totals dictionary with the formatted one
-        income_totals = formatted_income_totals
-
+        total_income, individual_incomes = calculate_total_income_between_dates(user_id, start_date, end_date)
+        income_totals = calculate_income_totals_formatted_debt(user_id, start_date, end_date)
 
         response_data = {
             'total_income': str(total_income),  # Convert Decimal to string
@@ -1045,101 +839,7 @@ def search_expense_transactions():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@app.route('/manage_expense_transaction/<int:transaction_id>', methods=['PUT', 'DELETE'])
-@login_required
-def manage_cash_out_transaction(transaction_id):
-    cash_out_transaction = CashOut.query.get(transaction_id)
-    #print(cash_in_transaction, 'test 1')
 
-    if not cash_out_transaction:
-        return jsonify({'error': 'Transaction not found'}), 404
-
-    print('test 2: transaction available')
-    if request.method == 'PUT':
-        try:
-            # Get the data from the request JSON
-            data = request.get_json()
-            print(data, 'test 3 json data exists')
-            # Validate and extract the data
-            new_description = data.get('description', cash_out_transaction.description)
-            print(new_description, 'test 4 new description check')
-
-            new_amount = data.get('amount', cash_out_transaction.amount)
-            print(new_amount, 'test 5 new amount check')
-
-            new_date = data.get('date', cash_out_transaction.date)
-            print(new_date, 'test 6 new date check')
-
-            # Convert amount to appropriate data types (e.g., int, float)
-            try:
-                new_amount = float(new_amount)
-                print(new_amount, 'test 7 new amount data type check')
-            except ValueError:
-                return jsonify({'error': 'Invalid data provided'}), 400
-            
-            # Convert the date string to a Python date object
-            try:
-                new_date = datetime.strptime(new_date, '%Y-%m-%d').date()
-                print(new_description, 'test 8 new date data type check')
-            except ValueError:
-                return jsonify({'error': 'Invalid date provided'}), 400
-
-            if new_amount < 0:
-                print(new_amount, 'test 9 new amount less 0 check')
-                return jsonify({'error': 'Amount cannot be negative'}), 400
-
-            # Check if it's a credit given out 
-            if cash_out_transaction.settled_debt_id is not None:
-                print(new_description, 'test 10 this is a credit payment check')
-                # Retrieve the associated debt object
-                debt = Debt.query.get(cash_out_transaction.settled_debt_id)
-
-                if debt is None:
-                    #print(credit, 'test 11 new credit to be settled is available check')
-                    return jsonify({'error': 'Associated debt not found'}), 400
-
-                # Check if the credit has been settled
-                if debt.is_paid:
-                    #print(debt.is_paid, 'test 12 has the credit been paid already? check')
-                    return jsonify({'error': 'Credit has already been paid'}), 400
-
-                # Check if the new amount + amount_payed exceeds the debt amount
-                if new_amount + debt.amount_payed > debt.amount:
-                    print('test 13 Payment exceeds credit amount check')
-                    return jsonify({'error': 'Payment exceeds credit amount'}), 400
-
-                # Update the amount_payed field of the credit
-                debt.amount_payed += new_amount
-
-                # Mark the credit as paid if the amount_payed equals the credit amount
-                if debt.amount_payed == debt.amount:
-                    debt.is_paid = True
-
-            # Call the update_transaction method
-            cash_out_transaction.update_transaction(new_description, new_amount, new_date)
-
-            # Format the date as 'yyyy-mm-dd'
-            formatted_date = cash_out_transaction.date.strftime('%Y-%m-%d')
-
-            # Create a dictionary with the updated data
-            updated_data = {
-                'message': 'Transaction updated successfully',
-                'id': cash_out_transaction.id,
-                'description': cash_out_transaction.description,
-                'amount': cash_out_transaction.amount,
-                'date': formatted_date,
-            }
-
-            return jsonify({'data': updated_data})
-
-        except Exception as e:
-            print('test 14 something else is wrong')
-            return jsonify({'error': 'Invalid data format'}), 400
-
-    elif request.method == 'DELETE':
-        # Call the delete_transaction method
-        cash_out_transaction.delete_transaction()
-        return jsonify({'message': 'Transaction deleted successfully'})
 
 
 

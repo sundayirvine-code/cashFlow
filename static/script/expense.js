@@ -310,7 +310,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     //incomeCategorySelect.value = '';
                     amountInput.value = '';
                     dateInput.value = '';
-                    //debtorSelect.value = '';
+                    debtorSelect.value = '';
                     descriptionInput.value = '';
 
                     // Update the transaction table with the new transaction data
@@ -319,9 +319,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     // Get a reference to the table body
                     const tableBody = document.getElementById('transactionTableBody');
 
-                    // Create a new row for the income transaction
+                    // Create a new row for the expense transaction
                     const row = document.createElement('tr');
-
+                    
                     // Create cells for each data point
                     const transactionIdCell = document.createElement('td');
                     transactionIdCell.textContent = transaction_id;

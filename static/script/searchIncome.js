@@ -24,6 +24,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle the retrieved transactions data here
                 console.log(data.transactions);
 
+                if (data.transactions.length == 0){
+                    // Display the success message
+                    successMessage=document.getElementById('successMessage');
+                    successMessage.textContent = 'No existing transactions in that date period';
+                    successMessage.style.backgroundColor = '#f95395';
+                    successMessage.style.color = 'black';
+                    successMessage.style.display = 'block';
+                    successMessage.style.opacity = '1'; 
+
+                    // Use setTimeout to hide the message after a delay
+                    setTimeout(() => {
+                        // Set the opacity to 0 for fading out
+                        successMessage.style.opacity = '0';
+
+                        // After the transition completes (0.5 seconds), hide the message
+                        setTimeout(() => {
+                            successMessage.style.display = 'none';
+                        }, 500);
+                    }, 2000);
+                }
+                document.getElementById('incomeSummaryAmount').textContent = data.total
                 // Update your table or display the filtered data as needed
                 const tableBody = document.getElementById('transactionTableBody');
                 tableBody.innerHTML = '';  // Clear the table body

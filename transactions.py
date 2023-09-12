@@ -134,6 +134,98 @@ def calculate_income_totals(user_id, start_date=None, end_date=None):
 
     return income_totals
 
+def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=None):
+    """
+    Calculate the total income amounts for each income category of a user within a specified date range.
+
+    Args:
+        user_id (int): The user's ID for whom income totals are calculated.
+        start_date (date, optional): The start date of the date range (inclusive). If not provided, it defaults to the
+            beginning of the current month.
+        end_date (date, optional): The end date of the date range (inclusive). If not provided, it defaults to the
+            current date.
+
+    Returns:
+        dict: A dictionary where keys are income category names (str) and values are the corresponding total amounts (float).
+
+    Example:
+        # Calculate income totals for the current user for the current month
+        user_id = current_user.id
+        income_totals = calculate_income_totals(user_id)
+        print(income_totals)
+        
+        # Calculate income totals for the current user for a custom date range
+        start_date = date(2023, 1, 1)
+        end_date = date(2023, 1, 31)
+        income_totals = calculate_income_totals(user_id, start_date, end_date)
+        print(income_totals)
+    """
+    from datetime import date
+    from models import Credit
+
+    # If start_date is not provided, set it to the beginning of the current month
+    if not start_date:
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+
+    # If end_date is not provided, set it to the current date
+    if not end_date:
+        end_date = date.today()
+
+    income_totals = calculate_income_totals(user_id, start_date, end_date)
+
+    # Query unique debtor names for the current user
+    debtor_names = (
+        db.session.query(Credit.debtor)
+        .filter_by(user_id=user_id)
+        .distinct()
+        .all()
+    )
+
+    # Extract the debtor names from the query result
+    unique_debtors = [debtor[0] for debtor in debtor_names]
+    '''
+    COME BACK HERE WHEN DEALING WITH DEBT
+    '''
+    # Calculate the sum of amount_payed for each debtor
+    debtor_totals = {}
+    for debtor_name in unique_debtors:
+        total_amount_payed = (
+            db.session.query(db.func.sum(Credit.amount_payed))
+            .filter_by(user_id=user_id, debtor=debtor_name)
+            .scalar()
+        )
+        if total_amount_payed is None:
+            total_amount_payed = 0
+        debtor_totals[debtor_name] = total_amount_payed
+
+    # Calculate the sum of all amount_payed values in the debtor_totals dictionary
+    total_debt_amount = sum(debtor_totals.values())
+
+    # Add the total_debt_amount to the income_totals dictionary with 'Debt' as the key
+    income_totals['Debt'] = total_debt_amount
+  
+
+    # Calculate the total income
+    total_income = sum(income_totals.values())
+
+    # Initialize a dictionary to store formatted amounts and percentages
+    formatted_income_totals = {}
+
+    # Format the amount values and update the income_totals dictionary
+    for category, amount in income_totals.items():
+        formatted_amount = "{:,.2f}/=".format(amount)
+        try:
+            percentage = "{:.2f}".format((amount / total_income) * 100)
+        except ZeroDivisionError:
+            percentage = "{:.2f}".format(0)
+        formatted_income_totals[category] = (formatted_amount, percentage)
+
+    # Replace the original income_totals dictionary with the formatted one
+    income_totals = formatted_income_totals
+
+    return income_totals
+
 def calculate_expense_totals(user_id, start_date=None, end_date=None):
     """
     Calculate the total expense amounts for each expense category of a user within a specified date range.
