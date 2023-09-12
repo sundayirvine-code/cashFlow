@@ -140,7 +140,7 @@
         </div>
         <div class="col-md-6 ">      
             <label for="editExpenseCategory">Choose Category</label>          
-            <select class="form-select" id="editExpenseCategory" name="ExpenseCategory">
+            <select class="form-select" id="editExpenseCategory" name="editExpenseCategory">
                 {% for ec in expense_categories %} 
                 <option value="{{ec.id}}">{{ec.name}}</option>
                 {% endfor %}

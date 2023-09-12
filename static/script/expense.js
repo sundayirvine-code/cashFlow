@@ -310,7 +310,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     //incomeCategorySelect.value = '';
                     amountInput.value = '';
                     dateInput.value = '';
-                    debtorSelect.value = '';
+                    document.getElementById('Creditor').value = '';
                     descriptionInput.value = '';
 
                     // Update the transaction table with the new transaction data
