@@ -357,7 +357,6 @@ def income():
                            from_date=from_date_formatted,
                            to_date=to_date_formatted) 
 
-
 # create an income category
 @login_required
 @app.route('/create_income_category', methods=['POST'])

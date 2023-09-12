@@ -42,7 +42,7 @@
         </div>
     </div>
     <div id="incomeSummary">
-        <h2 id="incomeSummaryAmount" style="color: #bfd220; font-weight: 900; margin: 0;">{{total_expenses}}</h2>
+        <h2 id="incomeSummaryAmount" style="color: #bfd220; font-weight: 900; margin: 0;">{{total_income}}</h2>
         <div style="display: flex; font-size: 13px;">
             <i style="margin-right: 5px;">From:</i>
             <p id="fromincomeSummaryDateRange" style="margin: 0;">{{from_date}}</p>
@@ -92,7 +92,7 @@
               <!-- Income transactions will be inserted here -->
               {% for income_transaction in income_transactions %}
                 <tr data-row-id="{{ income_transaction['transaction_id'] }}">
-                    <td>{{ income_transaction['transaction_id'] }}</td> 
+                    <td>{{ "CFINC-{0:03d}".format(income_transaction['transaction_id']) }}</td> 
                     <td>{{ income_transaction['income_category_name'] }}</td>
                     <td>{{ income_transaction['description'] }}</td>
                     <td>{{ income_transaction['date'] }}</td>
