@@ -105,11 +105,12 @@ class CashIn(db.Model):
 
     settled_credit = db.relationship('Credit', back_populates='cash_in_transactions')
 
-    def update_transaction(self, new_description, new_amount, new_date):
+    def update_transaction(self, new_description, new_amount, new_date, new_income_id):
         # Update the transaction attributes
         self.description = new_description
         self.amount = new_amount
         self.date = new_date
+        self.income_id = new_income_id
         db.session.commit()
 
     def delete_transaction(self):

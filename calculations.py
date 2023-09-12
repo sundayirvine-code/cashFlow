@@ -43,6 +43,7 @@ def calculate_total_income_between_dates(user_id, start_date=None, end_date=None
             'id': cash_in.id,
             'income_type': income_type.name,
             'type': 'Income',
+            'income_category_id': cash_in.income_id
         })
     
     total_income = Decimal(total_income).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)

@@ -15,21 +15,21 @@ function displaySuccessMessage(message) {
         successMessage.style.display = 'none';
       }, 500);
     }, 2000);
-  }
+}
 
 // Handle edit transaction button click
-let transactionId = 0;
+let incomeTransactionId = 0;
 document.querySelectorAll('.edit-transaction').forEach(editButton => {
     editButton.addEventListener('click', () => {
         // Extract data attributes from the edit icon
-        transactionId = editButton.getAttribute('data-transaction-id');
+        incomeTransactionId = editButton.getAttribute('data-transaction-id');
         const description = editButton.getAttribute('data-description');
         const amount = editButton.getAttribute('data-amount');
         const date = editButton.getAttribute('data-date');
-        const categoryId = editButton.getAttribute('data-categoryId'); 
-        const categoryName = editButton.getAttribute('data-categoryname');
+        const incomeCategoryId = editButton.getAttribute('data-categoryId');
+        const incomeCategoryName = editButton.getAttribute('data-categoryname');
 
-        console.log('Originals:', transactionId, description, amount, date, categoryId, categoryName);
+        console.log('Originals:', incomeTransactionId, description, amount, date, incomeCategoryId, incomeCategoryName);
 
         // Populate the edit form with data from the row
         document.getElementById('Editdate').value = date;
@@ -37,9 +37,9 @@ document.querySelectorAll('.edit-transaction').forEach(editButton => {
         document.getElementById('Editdescription').value = description;
 
         // Preselect the category based on category ID
-        const categorySelect = document.getElementById('editExpenseCategory');
+        const categorySelect = document.getElementById('editIncomeCategory');
         for (let i = 0; i < categorySelect.options.length; i++) {
-            if (categorySelect.options[i].value === categoryId) {
+            if (categorySelect.options[i].value === incomeCategoryId) {
                 categorySelect.selectedIndex = i;
                 break;
             }
@@ -50,36 +50,42 @@ document.querySelectorAll('.edit-transaction').forEach(editButton => {
     });
 });
 
+// Handle cancel edit button click
+document.getElementById('cancelEditTransaction').addEventListener('click', () => {
+    // Hide the edit form
+    document.getElementById('modal-edit').style.display = 'none';
+});
+
 // Handle edit form submission
 document.getElementById('submitEditTransactionForm').addEventListener('click', () => {
     // Collect data from the edit form
-    const newDate = document.getElementById('Editdate').value;
-    const newAmount = parseFloat(document.getElementById('Editamount').value); // Parse as a float
-    const newDescription = document.getElementById('Editdescription').value;
-    const newCategoryId = document.getElementById('editExpenseCategory').value;
+    const newIncomeDate = document.getElementById('Editdate').value;
+    const newIncomeAmount = parseFloat(document.getElementById('Editamount').value);
+    const newIncomeDescription = document.getElementById('Editdescription').value;
+    const newIncomeCategoryId = document.getElementById('editIncomeCategory').value;
 
-    console.log('Edits:', newDate, newAmount, newDescription, newCategoryId);
+    console.log('Edits:', newIncomeDate, newIncomeAmount, newIncomeDescription, newIncomeCategoryId);
 
     // Perform data validations
-    if (!newDate || !newAmount || !newCategoryId) {
+    if (!newIncomeDate || !newIncomeAmount|| !newIncomeCategoryId) {
         // Required fields are missing, display an error message
         alert('Please fill in all required fields.');
         return; // Stop further execution
     }
 
-    if (new Date(newDate) > new Date()) {
+    if (new Date(newIncomeDate) > new Date()) {
         // Date is in the future, display an error message
         alert('Please select a date that is not in the future.');
         return; // Stop further execution
     }
 
-    if (newAmount < 0) {
+    if (newIncomeAmount < 0) {
         // Amount is negative, display an error message
         alert('Please enter a non-negative amount.');
         return; // Stop further execution
     }
 
-    if (newDescription.length > 100) {
+    if (newIncomeDescription.length > 100) {
         // Description is too long, display an error message
         alert('Description should not exceed 100 characters.');
         return; // Stop further execution
@@ -87,15 +93,15 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
 
     // Construct a JSON object with the data
     const data = {
-        transaction_id: transactionId,
-        new_date: newDate,
-        new_amount: newAmount,
-        new_description: newDescription,
-        new_category_id: newCategoryId,
+        transaction_id: incomeTransactionId,
+        new_date: newIncomeDate,
+        new_amount: newIncomeAmount,
+        new_description: newIncomeDescription,
+        new_category_id: newIncomeCategoryId,
     };
 
-    // Send a POST request to the edit route
-    fetch('/edit_expense_transaction', {
+    // Send a POST request to the edit route for Income transactions
+    fetch('/edit_income_transaction', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -106,10 +112,8 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
         if (response.ok) {
             // Transaction updated successfully
             response.json().then(data => {
-                console.log('Response from server:', data);
                 // Access specific data fields from the JSON response, e.g., edited_transaction
                 const editedTransaction = data.edited_transaction;
-                console.log('Edited Transaction:', editedTransaction);
 
                 // Find the table row with the corresponding transaction_id
                 const tableRow = document.querySelector(`tr[data-row-id="${editedTransaction.transaction_id}"]`);
@@ -124,20 +128,20 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
                     // Update data attributes of edit and delete icons
                     const editIcon = tableRow.querySelector('.edit-transaction');
                     const deleteIcon = tableRow.querySelector('.delete-transaction');
-                    
+
                     editIcon.setAttribute('data-description', editedTransaction.new_description);
                     editIcon.setAttribute('data-date', editedTransaction.new_date);
                     editIcon.setAttribute('data-amount', editedTransaction.new_amount);
                     editIcon.setAttribute('data-categoryname', editedTransaction.new_category_name);
 
-                    // Hide the edit form
-                    document.getElementById('modal-edit').style.display = 'none';
+                   // Hide the edit form
+                   document.getElementById('modal-edit').style.display = 'none';
 
-                    displaySuccessMessage(data.message)
+                   displaySuccessMessage(data.message)
                 }
-            });         
+            });
         } else {
-           // Handle errors and display an error message
+            // Handle errors and display an error message
             response.json().then(errorData => {
                 console.error('Error from server:', errorData);
             });
@@ -145,40 +149,36 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
     });
 
     // Hide the edit form
-    document.getElementById('modal-edit').style.display = 'none';
+    document.getElementById('modal-edit-income').style.display = 'none';
 });
 
-// Handle cancel edit button click
-document.getElementById('cancelEditTransaction').addEventListener('click', () => {
-    // Hide the edit form
-    document.getElementById('modal-edit').style.display = 'none';
-});
+
 
 // Handle delete transaction button click
 document.querySelectorAll('.delete-transaction').forEach(deleteButton => {
     deleteButton.addEventListener('click', () => {
         // Extract data attributes from the delete icon
-        const transactionId = deleteButton.getAttribute('data-transaction-id');
+        const incomeTransactionId = deleteButton.getAttribute('data-transaction-id');
 
         // Display a confirmation modal for deletion
         document.getElementById('modal-delete').style.display = 'block';
 
         // Add an event listener for the delete button in the modal
         document.getElementById('modal-content-delete').addEventListener('click', () => {
-            // Send a POST request to the delete route
-            fetch('/delete_expense_transaction', {
+            // Send a POST request to the delete route for Income transactions
+            fetch('/delete_income_transaction', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ transaction_id: transactionId }),
+                body: JSON.stringify({ transaction_id: incomeTransactionId }),
             })
             .then(response => {
                 if (response.ok) {
                     // Transaction deleted successfully
                     response.json().then(data => {
                         // Find the table row with the corresponding transaction_id
-                        const tableRow = document.querySelector(`tr[data-row-id="${transactionId}"]`);
+                        const tableRow = document.querySelector(`tr[data-row-id="${incomeTransactionId}"]`);
                         // Add the 'fadeOut' class to initiate the animation
                         tableRow.classList.add('fadeOut');
                         // Wait for the animation to complete (0.5s in this example)
@@ -186,12 +186,12 @@ document.querySelectorAll('.delete-transaction').forEach(deleteButton => {
                             tableRow.classList.remove('fadeOut');
                             const tableBody = document.getElementById('transactionTableBody');
                             tableBody.removeChild(tableRow);
-                        }, 900);
+                        }, 500);
                         // Hide the delete modal
                         document.getElementById('modal-delete').style.display = 'none';
                         // Display a success message
                         displaySuccessMessage(data.message);
-                    })
+                    });
                 } else {
                     // Handle errors and display an error message
                 }
