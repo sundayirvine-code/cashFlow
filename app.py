@@ -1083,7 +1083,7 @@ def budget():
 
     # If a current budget exists, query for its expenses and join with expense names
     if current_budget:
-        current_budget.month = get_month_name(current_budget.month)
+        #current_budget.month = get_month_name(current_budget.month)
         budget_expenses = BudgetExpense.query.filter_by(budget_id=current_budget.id).all()
 
         # Join budget expenses with expense names

@@ -22,14 +22,60 @@ function createBudget() {
             currentBudgetElement.textContent = `${data.month} ${monthName}`;
         }
 
+        // Create a new budget card
+        const previousBudgetsContainer = document.getElementById('previousBudgets');
+        if (previousBudgetsContainer) {
+            const newBudgetCard = document.createElement('div');
+            newBudgetCard.classList.add('budgetcard');
+            newBudgetCard.setAttribute('data-budget-id', data.id);
+
+            // Populate the new budget card with data
+            newBudgetCard.innerHTML = `
+                <h4>${monthName} ${data.year}</h4>
+                <p>Estimate: ${data.expected_amount || '0.00'}</p>
+                <p>Actual: ${data.spent_amount || '0.00'}</p>
+            `;
+
+            // Append the new budget card as the first child of the container
+            previousBudgetsContainer.insertBefore(newBudgetCard, previousBudgetsContainer.firstChild);
+
+            // Display the success message
+            successMessage=document.getElementById('successMessage');
+            successMessage.textContent = 'Budget created successfully';
+            successMessage.style.display = 'block';
+            successMessage.style.opacity = '1'; 
+
+            // Use setTimeout to hide the message after a delay
+            setTimeout(() => {
+                successMessage.style.opacity = '0';
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 500);
+            }, 2000);
+        }
+
         const addBudgetExpensesBtn = document.getElementById('addBudgetExpenses');
         if(addBudgetExpensesBtn){
             addBudgetExpensesBtn.style.display='inline';              
         }
+        document.getElementById('createBudget').style.display='none'; 
     })
     .catch(error => {
         // Handle errors
         console.error('Error creating budget:', error);
+        // Display the error message
+        errorMessage=document.getElementById('errorMessage');
+        errorMessage.textContent = 'Error creating budget: ${error}';
+        errorMessage.style.display = 'block';
+        errorMessage.style.opacity = '1'; 
+
+        // Use setTimeout to hide the message after a delay
+        setTimeout(() => {
+            errorMessage.style.opacity = '0';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 500);
+        }, 2000);
     });
 }
 

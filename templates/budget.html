@@ -42,17 +42,25 @@
     {% endif %}
 </div>
 
-{% if budgets %}
+
 <div id="previousBudgets">
     <!-- Budget Expense transactions will be inserted here -->
     {% for budget in budgets %}
     <div class="budgetcard" data-budget-id="{{ budget.id }}">
         <h4>{{ (budget.month) }} {{ budget.year }}</h4>
-        <!-- Add other budget details if needed -->
+        {% if budget.expected_amount %}
+        <p>Estimate: {{budget.expected_amount}}</p>
+        {% else %}
+        <p>Estimate: 0.00</p>
+        {% endif %}
+        {% if budget.spent_amount %}
+        <p>Actual: {{budget.spent_amount}}</p>
+        {% else %}
+        <p>Actual: 0.00</p>
+        {% endif %}
     </div>
     {% endfor %}
 </div>
-{% endif %}
 
 
 <main id="currentBudget">
@@ -164,6 +172,8 @@
     <button id="modal-content-cancel" class="btn btn-primary col-md-3">Cancel</button>
 </div>
 
+<div id="successMessage"></div>
+<div id="errorMessage"></div>
 
 <script src="/static/script/searchBudget.js"></script>
 <script src="/static/script/budget.js"></script>
