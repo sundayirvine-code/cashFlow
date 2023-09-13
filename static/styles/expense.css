@@ -83,6 +83,19 @@
     cursor: pointer;
 }
 
+#date-range-picker{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.from, .to{
+    flex: 1 0 100px;
+}
+
+#btn{
+    flex: 1 0 60px;
+}
 /*customize bootstrap forms*/
 form input{
     outline: 0;
@@ -134,10 +147,6 @@ tr:hover{
     margin: 0;
 }
 
-.from, .to{
-    flex-basis: 200px;
-    margin-right: 5px;
-}
 
 /* Style the scrollbar track */
 #categoryCards::-webkit-scrollbar {
@@ -273,7 +282,11 @@ tr:hover{
     }
     #categories_summary_box{
         flex-direction: column;
-        max-height: 300px;
+        max-height: 210px;
+    }
+
+    hr{
+        margin: 0 !important;
     }
 
     #categories{
@@ -293,18 +306,9 @@ tr:hover{
         height: 3px;
       }
 
-      .from, .to{
-        flex-basis: 140px;
-        margin: 0;
-        margin-bottom: 5px;
-      }
 
       .form-control{
         width: 150px !important;
-      }
-
-      .date-range-picker{
-        justify-content: flex-start;
       }
 
       #categoryName, #Editamount, #Editdate, #Editdescription{

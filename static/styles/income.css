@@ -55,8 +55,8 @@
 
 
 #categoryCards{
-    width: 100%; /* Ensure the container takes up the full available width */
-    white-space: nowrap; /* Prevent cards from wrapping to the next line */
+    width: 100%; 
+    white-space: nowrap; 
     overflow-x: auto;  
     max-height: 200px;
     max-width: 100%;
@@ -118,9 +118,18 @@ tr:hover{
     margin: 0;
 }
 
+#date-range-picker{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
 .from, .to{
-    flex-basis: 200px;
-    margin-right: 5px;
+    flex: 1 0 120px;
+}
+
+#btn{
+    flex: 1 0 60px;
 }
 
 /* Style the scrollbar track */
@@ -265,7 +274,10 @@ form input{
     }
     #categories_summary_box{
         flex-direction: column;
-        max-height: 300px;
+        max-height: 210px;
+    }
+    #categoriesHeader {
+        justify-content: space-evenly;
     }
 
     #categories{
@@ -285,19 +297,10 @@ form input{
         height: 3px;
       }
 
-      .from, .to{
-        flex-basis: 140px;
-        margin: 0;
-        margin-bottom: 5px;
-      }
-
       .form-control{
         width: 150px !important;
       }
 
-      .date-range-picker{
-        justify-content: flex-start;
-      }
 
       #categoryName, #Editamount, #Editdate, #Editdescription{
         width: 100% !important;
@@ -305,8 +308,9 @@ form input{
 
 }
 
-@media (max-width: 375px){
+@media (max-width: 425px){
 #body .container {
     max-width: 99% !important;
 }
+
 }

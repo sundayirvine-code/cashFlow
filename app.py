@@ -1,13 +1,11 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, abort
 from auth import register_user, authenticate_user
 from forms import RegistrationForm, LoginForm, IncomeCategoryForm, IncomeTransactionForm
-from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut
+from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut, Budget, BudgetExpense
 from flask_login import login_required, logout_user, LoginManager, login_user, current_user
 from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction, calculate_income_totals_formatted_debt
 from datetime import date, datetime
 from calculations import calculate_total_income_between_dates, calculate_total_expenses_between_dates, calculate_expense_percentage_of_income
-import plotly.graph_objs as go
-import plotly.express as px
 
 
 
@@ -100,7 +98,6 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html', form=form)
-
 
 # User logout
 @app.route('/logout')
@@ -250,7 +247,8 @@ def dashboard():
     else:
         return redirect(url_for('login'))
 
-# User Income management
+
+# Income Magement ------------------------------------------------------------------------
 @login_required
 @app.route('/income', methods=['GET', 'POST'])
 def income():
@@ -770,7 +768,6 @@ def create_expense_category():
     # Handle the case where an error occurred while adding the expense
     return jsonify({"success": False, "message": "An error occurred while adding the expense."}), 500
 
-# Create an expense transaction
 @login_required
 @app.route('/create_expense_transaction', methods=['POST'])
 def create_expense_transaction():
@@ -927,7 +924,6 @@ def search_expense_transactions():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-
 @app.route('/edit_expense_transaction', methods=['POST'])
 @login_required
 def edit_expense_transaction():
@@ -999,9 +995,8 @@ def edit_expense_transaction():
 
     return jsonify({'message': 'Expense transaction updated successfully', 'edited_transaction': edited_transaction}), 200
 
-
-# Route to delete an expense transaction
 @app.route('/delete_expense_transaction', methods=['POST'])
+@login_required
 def delete_expense_transaction():
     # Parse JSON data sent from the client (JavaScript)
     data = request.get_json()
@@ -1027,6 +1022,88 @@ def delete_expense_transaction():
     return jsonify({'message': 'Expense transaction deleted successfully'}), 200
 
 
+# Budget Magement ------------------------------------------------------------------------
+def get_month_name(month_number):
+    # Map month numbers to their names
+    month_names = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+
+    # Ensure month_number is within a valid range
+    if 1 <= month_number <= 12:
+        return month_names[month_number - 1]
+    else:
+        return None  # Return None for invalid month numbers
+    
+@app.route('/budget', methods=['GET', 'POST'])
+@login_required
+def budget():
+    user_id = current_user.id
+
+    # Get the current year and month
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+
+    # Handle POST request to create a budget
+    if request.method == 'POST':
+        # Create a new budget for the current month and year
+        new_budget = Budget(user_id=user_id, year=current_year, month=current_month)
+        db.session.add(new_budget)
+        db.session.commit()
+
+        # Return the newly created budget object in JSON format
+        return jsonify({
+            'id': new_budget.id,
+            'user_id': new_budget.user_id,
+            'year': new_budget.year,
+            'month': new_budget.month
+        })
+    
+
+    # Query for all expenses for the current user
+    expenses = Expense.query.filter_by(user_id=user_id).all()
+
+    # Query for all budgets created by the user
+    budgets = Budget.query.filter_by(user_id=user_id).all()
+
+
+    # Find the budget for the current month and year, if it exists
+    current_budget = None
+    for budget in budgets:
+        if budget.year == current_year and budget.month == current_month:
+            current_budget = budget
+            break
+    
+    # Convert Budget.month values to their appropriate string representations
+    for budget in budgets:
+        budget.month = get_month_name(budget.month)
+
+    budget_expenses_with_names = []
+
+    # If a current budget exists, query for its expenses and join with expense names
+    if current_budget:
+        current_budget.month = get_month_name(current_budget.month)
+        budget_expenses = BudgetExpense.query.filter_by(budget_id=current_budget.id).all()
+
+        # Join budget expenses with expense names
+        for budget_expense in budget_expenses:
+            expense = Expense.query.get(budget_expense.expense_id)
+            budget_expenses_with_names.append({
+                'id': budget_expense.id,
+                'budget_id': budget_expense.budget_id,
+                'expense_id': budget_expense.expense_id,
+                'expected_amount': budget_expense.expected_amount,
+                'spent_amount': budget_expense.spent_amount,
+                'expense_name': expense.name
+            })
+
+        print(current_budget, current_budget.month, current_budget.year)
+
+    return render_template('budget.html', expenses=expenses, 
+                           current_budget=current_budget, 
+                           budget_expenses=budget_expenses_with_names,
+                           budgets=budgets)
 
 if __name__ == '__main__':
     with app.app_context():

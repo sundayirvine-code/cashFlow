@@ -62,7 +62,7 @@
             <p>Transactions</p>
             <i class="bi bi-plus-lg" id="openTransactionForm"></i>
         </div>
-        <div class="date-range-picker mb-3" style="display: flex;display: flex; flex-wrap: wrap; align-items: center;justify-content: center;">
+        <div class="date-range-picker mb-3" id="date-range-picker">
             <div class="from"> 
                 <label for="dateRangePickerFrom">From:</label>
                 <input type="date" id="dateRangePickerFrom" class="form-control">
@@ -71,7 +71,7 @@
                 <label for="dateRangePickerTo">To:</label>
                 <input type="date" id="dateRangePickerTo" class="form-control">
             </div>
-            <div style="align-self: flex-end;">
+            <div style="align-self: flex-end;" id="btn">
                 <button id="searchButton" class="btn btn-primary">Search</button>
             </div>
         </div>
