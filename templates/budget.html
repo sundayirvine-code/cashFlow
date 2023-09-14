@@ -48,15 +48,27 @@
     {% for budget in budgets %}
     <div class="budgetcard" data-budget-id="{{ budget.id }}">
         <h4>{{ (budget.month) }} {{ budget.year }}</h4>
-        {% if budget.expected_amount %}
-        <p>Estimate: {{budget.expected_amount}}</p>
+        {% if budget.total_expected_amount %}
+        <div style="display: flex; gap: 5px;align-items: center;">
+            <p style="font-size: 12px;">Estimate: </p>
+            <p style="color: #bfd220;font-weight: 700;">{{"{:,.2f}/=".format(budget.total_expected_amount)}}</p>
+        </div>
         {% else %}
-        <p>Estimate: 0.00</p>
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <p style="font-size: 12px;">Estimate:</p>
+            <p style="color: gray;font-weight: 700; ">0.00</p>
+        </div>
         {% endif %}
-        {% if budget.spent_amount %}
-        <p>Actual: {{budget.spent_amount}}</p>
+        {% if budget.total_actual_amount %}
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <p style="font-size: 12px;">Actual:</p>
+            <p style="font-weight: 700;color:{% if budget.total_expected_amount >= budget.total_actual_amount  %}#bfd220{% else %}#f95395{% endif %} ;">{{"{:,.2f}/=".format(budget.total_actual_amount)}}</p>
+        </div>
         {% else %}
-        <p>Actual: 0.00</p>
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <p style="font-size: 12px;">Actual:</p>
+            <p style="color: gray;font-weight: 700;">0.00</p>
+        </div>
         {% endif %}
     </div>
     {% endfor %}
@@ -95,8 +107,8 @@
                 {% for expense in budget_expenses %}
                 <tr data-row-id="{{ expense.id }}">
                     <td>{{ expense.expense_name }}</td>
-                    <td>{{ expense.expected_amount }}</td>
-                    <td>{{ expense.spent_amount }}</td>
+                    <td style="color: #bfd220;">{{ "{:,.2f}/=".format(expense.expected_amount) }}</td>
+                    <td style="color:{% if expense.expected_amount >= expense.spent_amount %}#bfd220{% else %}#f95395{% endif %};">{{ "{:,.2f}/=".format(expense.spent_amount) }}</td>
                     <td>{{ (expense.spent_amount / expense.expected_amount * 100)|round(2) }}%</td>
                     <td class="actions">
                         <!-- Edit and Delete buttons with appropriate data attributes -->
@@ -120,13 +132,15 @@
 
 
 <!-- Form to create a budgetExpense transaction -->
-<div id="modal-create" style="display: none;">
+<div id="modal-create" style="display: none;" data-budget-id="{{current_budget.id}}">
     <div class="row g-3">              
     
         <div class="col-md-6 ">      
             <label for="Expense">Choose Expense</label>          
             <select class="form-select" id="Expense" name="Expense">
-                <option value=""></option>
+                {% for expense in expenses %}
+                <option value="{{expense.id}}">{{expense.name}}</option>
+                {% endfor %}
             </select>          
         </div>
 
@@ -143,7 +157,7 @@
 </div>
 
 <!-- Form to edit a budgetExpense transaction -->
-<div id="modal-edit" style="display: none;">
+<div id="modal-edit" style="display: none;" data-budgetexpense-id="{{current_budget.id}}">
     <div class="row g-3">              
     
         <div class="col-md-6 ">      
@@ -177,4 +191,5 @@
 
 <script src="/static/script/searchBudget.js"></script>
 <script src="/static/script/budget.js"></script>
+<script src="/static/script/createBudgetExpense.js"></script>
 {% endblock %}

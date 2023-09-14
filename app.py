@@ -803,8 +803,34 @@ def create_expense_transaction():
         if not debt_to_settle and expense_category == 1:
             raise ValueError("No outstanding credit found for the specified debtor.")
 
+        # Check if the budget for the current month and year exists
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        current_budget = Budget.query.filter_by(user_id=user_id, month=current_month, year=current_year).first()
+        print(current_budget)
 
-        # Call the add_cash_in_transaction function with the settled_credit_id
+        if current_budget:
+            # Check if the expense is listed in the current month's BudgetExpense
+            budget_expense = BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first()
+
+            print(budget_expense)
+
+            if budget_expense:
+                try:
+                    print(budget_expense.spent_amount, amount)
+                    # Update the spent amount in the BudgetExpense model
+                    budget_expense.update_spent_amount(amount)
+                    db.session.commit()
+                    db.session.refresh(budget_expense)
+                    print(budget_expense.spent_amount)
+                    
+                    print(BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first().spent_amount)
+                except Exception as e:
+                    # Handle the exception (e.g., log the error)
+                    print('Error adding amount')
+                    db.session.rollback()  
+
+        # Call the add_cash_out_transaction function with the settled_credit_id
         cash_out = add_cash_out_transaction(
             user_id=user_id,
             amount=amount,
@@ -1068,17 +1094,36 @@ def budget():
     budgets = Budget.query.filter_by(user_id=user_id).all()
 
 
-    # Find the budget for the current month and year, if it exists
-    current_budget = None
-    for budget in budgets:
-        if budget.year == current_year and budget.month == current_month:
-            current_budget = budget
-            break
+    # Query for the current budget
+    current_budget = Budget.query.filter_by(
+        user_id=user_id,
+        year=current_year,
+        month=current_month
+    ).first()
     
-    # Convert Budget.month values to their appropriate string representations
+    budget_with_totals = []
+
+    # Calculate total expected and actual amounts for each budget
     for budget in budgets:
+        # Query for budget expenses associated with the current budget
+        budget_expenses = BudgetExpense.query.filter_by(budget_id=budget.id).all()
+
+        total_expected_amount = sum(budget_expense.expected_amount for budget_expense in budget_expenses)
+        total_actual_amount = sum(budget_expense.spent_amount for budget_expense in budget_expenses)
+
+        # Convert Budget.month values to their appropriate string representations
         budget.month = get_month_name(budget.month)
 
+        budget_with_totals.append({
+            'id': budget.id,
+            'user_id': budget.user_id,
+            'year': budget.year,
+            'month': budget.month,
+            'total_expected_amount': total_expected_amount,
+            'total_actual_amount': total_actual_amount
+        })
+
+    print('Budgets with totals', budget_with_totals)
     budget_expenses_with_names = []
 
     # If a current budget exists, query for its expenses and join with expense names
@@ -1103,7 +1148,56 @@ def budget():
     return render_template('budget.html', expenses=expenses, 
                            current_budget=current_budget, 
                            budget_expenses=budget_expenses_with_names,
-                           budgets=budgets)
+                           budgets=budget_with_totals)
+
+@app.route('/create_budget_expense', methods=['POST'])
+@login_required
+def create_budget_expense():
+    try:
+        data = request.get_json()
+        expense_id = data.get('expense_id')
+        expected_amount = data.get('expected_amount')
+        budgetId = data.get('budgetId')
+
+        # Validate data (ensure expense_id exists and expected_amount is non-negative)
+        if not expense_id or not budgetId or expected_amount is None or expected_amount < 0:
+            return jsonify({'error': 'Invalid data'}), 400
+
+        # Create a new BudgetExpense record
+        budget_expense = BudgetExpense(
+            budget_id=budgetId,
+            expense_id=expense_id,
+            expected_amount=expected_amount,
+            spent_amount=0.0
+        )
+
+        # Add the new budget expense to the database and commit the transaction
+        db.session.add(budget_expense)
+        db.session.commit()
+
+        # Get the related expense and budget information
+        expense = Expense.query.get(expense_id)
+        budget = Budget.query.get(budgetId)
+
+        # Prepare the JSON response with additional data
+        response_data = {
+            'message': 'Budget expense created successfully',
+            'expense_id': expense.id,
+            'expense_name': expense.name,
+            'budget_id': budget.id,
+            'budget_expense_id': budget_expense.id,
+            'expected_amount': "{:,.2f}/=".format(budget_expense.expected_amount),
+            'actual_amount': "{:,.2f}/=".format(0.00)
+        }
+
+        # Return the JSON response
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        # Handle exceptions or errors here
+        return jsonify({'error': str(e)}), 500
+    
+
 
 if __name__ == '__main__':
     with app.app_context():

@@ -217,6 +217,15 @@ class BudgetExpense(db.Model):
     # Add a unique constraint to prevent duplicate budget expense entries
     __table_args__ = (db.UniqueConstraint('budget_id', 'expense_id'),)
 
+    def update_spent_amount(self, amount):
+        # Update the transaction attributes
+        if self.spent_amount == 0:
+            self.spent_amount = amount
+        else:
+            self.spent_amount += amount
+        db.session.commit()
+        
+
     def __repr__(self):
         return f"<BudgetExpense budget_id={self.budget_id}, expense_id={self.expense_id}>"
 
