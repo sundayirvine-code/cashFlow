@@ -351,7 +351,7 @@ def income():
                            income_categories=income_categories, # form data
                            income_totals=income_totals, # card data
                            income_transactions=income_transactions,
-                           total_income=total_income,
+                           total_income="{:,.2f}/=".format(total_income),
                            from_date=from_date_formatted,
                            to_date=to_date_formatted) 
 
@@ -1123,16 +1123,21 @@ def budget():
             'total_actual_amount': total_actual_amount
         })
 
-    print('Budgets with totals', budget_with_totals)
+    #print('Budgets with totals', budget_with_totals)
     budget_expenses_with_names = []
-
+    current_total_expected_amount = 0
+    current_total_actual_amount = 0
+    expense_count = 0
     # If a current budget exists, query for its expenses and join with expense names
     if current_budget:
         #current_budget.month = get_month_name(current_budget.month)
         budget_expenses = BudgetExpense.query.filter_by(budget_id=current_budget.id).all()
+        current_total_expected_amount += sum(budget_expense.expected_amount for budget_expense in budget_expenses)
+        current_total_actual_amount += sum(budget_expense.spent_amount for budget_expense in budget_expenses)
 
         # Join budget expenses with expense names
         for budget_expense in budget_expenses:
+            expense_count += 1
             expense = Expense.query.get(budget_expense.expense_id)
             budget_expenses_with_names.append({
                 'id': budget_expense.id,
@@ -1143,12 +1148,16 @@ def budget():
                 'expense_name': expense.name
             })
 
-        print(current_budget, current_budget.month, current_budget.year)
+        #print(current_budget, current_budget.month, current_budget.year)
 
     return render_template('budget.html', expenses=expenses, 
                            current_budget=current_budget, 
                            budget_expenses=budget_expenses_with_names,
-                           budgets=budget_with_totals)
+                           budgets=budget_with_totals,
+                           current_total_expected_amount=current_total_expected_amount,
+                           current_total_actual_amount=current_total_actual_amount,
+                           expense_count=expense_count,
+                           )
 
 @app.route('/create_budget_expense', methods=['POST'])
 @login_required
@@ -1197,6 +1206,43 @@ def create_budget_expense():
         # Handle exceptions or errors here
         return jsonify({'error': str(e)}), 500
     
+@app.route('/search_budget_expenses/<int:budget_id>', methods=['GET'])
+@login_required
+def search_budget_expenses(budget_id):
+    try:
+        # Check if the budget exists
+        budget = Budget.query.get(budget_id)
+        if not budget:
+            return jsonify({'error': 'Budget not found'}), 404
+
+        # Query for BudgetExpense records associated with the budget ID
+        budget_expenses = BudgetExpense.query.filter_by(budget_id=budget_id).all()
+
+        # Calculate the sum of expected and spent amounts
+        total_expected_amount = sum(expense.expected_amount for expense in budget_expenses)
+        total_spent_amount = sum(expense.spent_amount for expense in budget_expenses)
+
+        # Prepare the data to send back to the client
+        budget_expenses_data = []
+        for expense in budget_expenses:
+            budget_expenses_data.append({
+                'id': expense.id,
+                'budget_id': expense.budget_id,
+                'expense_id': expense.expense_id,
+                'expected_amount':  "{:,.2f}/=".format(expense.expected_amount),
+                'spent_amount':  "{:,.2f}/=".format(expense.spent_amount),
+                'percentage': "{:.2f}".format((expense.spent_amount / expense.expected_amount) * 100),
+                'expense_name': Expense.query.get(expense.expense_id).name  # Get the expense name
+            })
+
+        return jsonify({
+            'budget_expenses': budget_expenses_data,
+            'total_expected_amount': total_expected_amount,
+            'total_spent_amount': total_spent_amount
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':

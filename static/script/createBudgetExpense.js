@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${data.expense_name}</td>
                         <td>${data.expected_amount}</td>
                         <td>${data.actual_amount}</td>
-                        <td>${(data.actual_amount / data.expected_amount * 100).toFixed(2)}%</td>
+                        <td>${(0).toFixed(2)}%</td>
                         <td class="actions">
                             <!-- Edit and Delete buttons with appropriate data attributes -->
                             <i class="fas fa-edit edit-transaction"
