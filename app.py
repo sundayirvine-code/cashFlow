@@ -1221,10 +1221,12 @@ def search_budget_expenses(budget_id):
         # Calculate the sum of expected and spent amounts
         total_expected_amount = sum(expense.expected_amount for expense in budget_expenses)
         total_spent_amount = sum(expense.spent_amount for expense in budget_expenses)
+        expense_count = 0
 
         # Prepare the data to send back to the client
         budget_expenses_data = []
         for expense in budget_expenses:
+            expense_count += 1
             budget_expenses_data.append({
                 'id': expense.id,
                 'budget_id': expense.budget_id,
@@ -1235,15 +1237,73 @@ def search_budget_expenses(budget_id):
                 'expense_name': Expense.query.get(expense.expense_id).name  # Get the expense name
             })
 
+        print(budget.year, budget.month)
         return jsonify({
             'budget_expenses': budget_expenses_data,
             'total_expected_amount': total_expected_amount,
-            'total_spent_amount': total_spent_amount
+            'total_spent_amount': total_spent_amount,
+            'percent': "{:.2f}%".format((total_spent_amount / total_expected_amount) * 100),
+            'expense_count': expense_count,
+            'year': budget.year,
+            'month': get_month_name(budget.month),
         }), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/search_budget_by_year_month', methods=['POST'])
+@login_required
+def search_budget_by_year_month():
+    try:
+        # Get the year and month from the request JSON data
+        data = request.get_json()
+        year = data.get('year')
+        month = data.get('month')
+
+        # Query for the budget with the specified year and month
+        budget = Budget.query.filter_by(year=year, month=month, user_id=current_user.id).first()
+
+        if not budget:
+            return jsonify({'error': 'Budget not found for the specified year and month'}), 404
+
+        # Query for BudgetExpense records associated with the budget ID
+        budget_expenses = BudgetExpense.query.filter_by(budget_id=budget.id).all()
+
+
+        # Calculate the sum of expected and spent amounts
+        total_expected_amount = sum(expense.expected_amount for expense in budget_expenses)
+        total_spent_amount = sum(expense.spent_amount for expense in budget_expenses)
+        expense_count = 0
+        # Prepare the data to send back to the client
+        budget_expenses_data = []
+        for expense in budget_expenses:
+            expense_count += 1
+            budget_expenses_data.append({
+                'id': expense.id,
+                'budget_expense_id': expense.id,
+                'budget_id': expense.budget_id,
+                'expense_id': expense.expense_id,
+                'expected_amount': "{:,.2f}/=".format(expense.expected_amount),
+                'spent_amount':  "{:,.2f}/=".format(expense.spent_amount),
+                'percentage': "{:.2f}".format((expense.spent_amount / expense.expected_amount) * 100),
+                'expense_name': Expense.query.get(expense.expense_id).name 
+            })
+
+        return jsonify({
+            'budget_id': budget.id,
+            'year': budget.year,
+            'month': get_month_name(budget.month),
+            'budget_expenses': budget_expenses_data,
+            'total_expected_amount': total_expected_amount,
+            'total_spent_amount': total_spent_amount,
+            'percent': "{:.2f}%".format((total_spent_amount / total_expected_amount) * 100),
+            'expense_count': expense_count
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 
 if __name__ == '__main__':
     with app.app_context():
