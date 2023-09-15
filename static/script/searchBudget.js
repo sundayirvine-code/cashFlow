@@ -196,7 +196,7 @@ async function renderBudgetChart(actualAmount, expectedAmount) {
                         display: false, // Hide legend
                     },
                     title: {
-                        display: true,
+                        display: false,
                         text: 'Budget Overview', // Set your chart title here
                         font: {
                             size: 15, // Set the font size for the title
