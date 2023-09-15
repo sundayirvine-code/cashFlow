@@ -106,7 +106,7 @@ async function searchBudgetByYearMonth(year, month) {
         console.error('Error searching for budget by year and month:', error);
         // Display the error message
         errorMessage=document.getElementById('errorMessage');
-        errorMessage.textContent = 'Budget unavailable for that date period';
+        errorMessage.textContent = error;
         errorMessage.style.display = 'block';
         errorMessage.style.opacity = '1'; 
 

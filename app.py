@@ -6,7 +6,8 @@ from flask_login import login_required, logout_user, LoginManager, login_user, c
 from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction, calculate_income_totals_formatted_debt
 from datetime import date, datetime
 from calculations import calculate_total_income_between_dates, calculate_total_expenses_between_dates, calculate_expense_percentage_of_income
-
+from dateutil.relativedelta import relativedelta
+from sqlalchemy import func
 
 
 # Configuration
@@ -1071,6 +1072,8 @@ def budget():
     current_year = datetime.now().year
     current_month = datetime.now().month
 
+    print(current_year, current_month)
+
     # Handle POST request to create a budget
     if request.method == 'POST':
         # Create a new budget for the current month and year
@@ -1093,7 +1096,7 @@ def budget():
     # Query for all budgets created by the user
     budgets = Budget.query.filter_by(user_id=user_id).all()
 
-
+    print('Dates ------------',current_year, current_month)
     # Query for the current budget
     current_budget = Budget.query.filter_by(
         user_id=user_id,
@@ -1101,18 +1104,31 @@ def budget():
         month=current_month
     ).first()
     
+    print('current budget ------------',current_budget)
     budget_with_totals = []
 
+    print('budgets ------------',budgets)
     # Calculate total expected and actual amounts for each budget
     for budget in budgets:
         # Query for budget expenses associated with the current budget
         budget_expenses = BudgetExpense.query.filter_by(budget_id=budget.id).all()
 
+        if budget.year==current_year:
+            if isinstance(budget.month, int): 
+                if budget.month == current_month:
+                    current_budget = budget
+            else:
+                if budget.month == get_month_name(current_month):
+                    current_budget = budget
+
+        print('current budget ------------',current_budget)
         total_expected_amount = sum(budget_expense.expected_amount for budget_expense in budget_expenses)
         total_actual_amount = sum(budget_expense.spent_amount for budget_expense in budget_expenses)
 
         # Convert Budget.month values to their appropriate string representations
-        budget.month = get_month_name(budget.month)
+        if isinstance(budget.month, int):
+            budget.month = get_month_name(budget.month)
+
 
         budget_with_totals.append({
             'id': budget.id,
@@ -1130,15 +1146,32 @@ def budget():
     expense_count = 0
     # If a current budget exists, query for its expenses and join with expense names
     if current_budget:
+        # Calculate the start and end dates for the current month using relativedelta
+        start_date = date(current_year, current_month, 1)
+        end_date = date.today()
         #current_budget.month = get_month_name(current_budget.month)
         budget_expenses = BudgetExpense.query.filter_by(budget_id=current_budget.id).all()
-        current_total_expected_amount += sum(budget_expense.expected_amount for budget_expense in budget_expenses)
-        current_total_actual_amount += sum(budget_expense.spent_amount for budget_expense in budget_expenses)
+        
 
         # Join budget expenses with expense names
         for budget_expense in budget_expenses:
             expense_count += 1
             expense = Expense.query.get(budget_expense.expense_id)
+            total_spent_amount = db.session.query(func.sum(CashOut.amount)).filter(
+                CashOut.user_id == user_id,
+                CashOut.expense_id == expense.id,
+                CashOut.date >= start_date,
+                CashOut.date <= end_date
+            ).scalar()
+
+            # Update the spent amount for the BudgetExpense
+            if budget_expense.spent_amount == 0:
+                amt = total_spent_amount if total_spent_amount else 0.0
+                budget_expense.update_spent_amount(amt)
+                db.session.commit()
+
+            budget_expense=BudgetExpense.query.get(budget_expense.id)
+            print('Upadted budget expense spent amount------------------------------------', budget_expense.spent_amount)
             budget_expenses_with_names.append({
                 'id': budget_expense.id,
                 'budget_id': budget_expense.budget_id,
@@ -1148,8 +1181,13 @@ def budget():
                 'expense_name': expense.name
             })
 
-        #print(current_budget, current_budget.month, current_budget.year)
+        current_total_expected_amount += sum(budget_expense.expected_amount for budget_expense in budget_expenses)
+        current_total_actual_amount += sum(budget_expense.spent_amount for budget_expense in budget_expenses)  
 
+        print(current_budget, current_budget.month, current_budget.year)
+    print('------------------------------------')
+
+    print(budget_expenses_with_names)
     return render_template('budget.html', expenses=expenses, 
                            current_budget=current_budget, 
                            budget_expenses=budget_expenses_with_names,
@@ -1238,6 +1276,8 @@ def search_budget_expenses(budget_id):
             })
 
         print(budget.year, budget.month)
+        if isinstance(budget.month, int):
+            budget.month = get_month_name(budget.month)
         return jsonify({
             'budget_expenses': budget_expenses_data,
             'total_expected_amount': total_expected_amount,
@@ -1245,35 +1285,42 @@ def search_budget_expenses(budget_id):
             'percent': "{:.2f}%".format((total_spent_amount / total_expected_amount) * 100),
             'expense_count': expense_count,
             'year': budget.year,
-            'month': get_month_name(budget.month),
+            'month': budget.month,
         }), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/search_budget_by_year_month', methods=['POST'])
 @login_required
 def search_budget_by_year_month():
-    try:
-        # Get the year and month from the request JSON data
-        data = request.get_json()
-        year = data.get('year')
-        month = data.get('month')
+    # Get the year and month from the request JSON data
+    data = request.get_json()
+    year = data.get('year')
+    month = data.get('month')
 
+    print(year, month)
+
+    month = get_month_name(int(month))
+
+    print(year, month)
+    
+    try:
         # Query for the budget with the specified year and month
         budget = Budget.query.filter_by(year=year, month=month, user_id=current_user.id).first()
-
+        print('budget search by year and month -----------',budget)
         if not budget:
             return jsonify({'error': 'Budget not found for the specified year and month'}), 404
 
         # Query for BudgetExpense records associated with the budget ID
         budget_expenses = BudgetExpense.query.filter_by(budget_id=budget.id).all()
 
-
+        print(budget_expenses )
         # Calculate the sum of expected and spent amounts
         total_expected_amount = sum(expense.expected_amount for expense in budget_expenses)
         total_spent_amount = sum(expense.spent_amount for expense in budget_expenses)
+
+        print(total_expected_amount, total_spent_amount )
         expense_count = 0
         # Prepare the data to send back to the client
         budget_expenses_data = []
@@ -1290,10 +1337,15 @@ def search_budget_by_year_month():
                 'expense_name': Expense.query.get(expense.expense_id).name 
             })
 
+            print(budget_expenses_data)
+        
+        print('redy to return DAta')
+
+
         return jsonify({
             'budget_id': budget.id,
             'year': budget.year,
-            'month': get_month_name(budget.month),
+            'month': budget.month,
             'budget_expenses': budget_expenses_data,
             'total_expected_amount': total_expected_amount,
             'total_spent_amount': total_spent_amount,
@@ -1302,6 +1354,7 @@ def search_budget_by_year_month():
         }), 200
 
     except Exception as e:
+        print('exception', e)
         return jsonify({'error': str(e)}), 500
     
 @app.route('/edit_budget_expense', methods=['POST'])
