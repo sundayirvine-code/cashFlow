@@ -9,7 +9,12 @@
 {% block title %}CashFlow | Budget{% endblock %}
 
 {% block content %}
-<h3 style="margin: 0;" class="mt-3">Budget Management</h3>
+<div style="display: flex; align-items: center; justify-content: space-between;" class="mt-3">
+    <h3 style="margin: 0;">Budget Management</h3>
+    <a href="{{ url_for('dashboard') }}">
+        <i style="color: white;" class="fas fa-sign-out-alt fa-rotate-180"></i>
+    </a>
+</div>
 
 <div id="budgetChartSummary">
     <div id="budgetChart" data-actual_amount="{{current_total_actual_amount}}" data-expected_amount="{{current_total_expected_amount}}">
@@ -17,7 +22,11 @@
     </div>
     <div id="budgetSummary">
             <div id="percent">
-                <h4>{{"{:.2f}".format((current_total_actual_amount / current_total_expected_amount) * 100)}}%</h4>
+                {% if current_total_expected_amount > 0 %}
+                    <h4>{{"{:.2f}".format((current_total_actual_amount / current_total_expected_amount) * 100)}}%</h4>
+                {% else %}
+                    <h4>0.00%</h4>
+                {% endif %}
                 <p>of total spent</p>
             </div>
             <div id="count">
@@ -165,14 +174,16 @@
 <!-- Form to edit a budgetExpense transaction -->
 <div id="modal-edit" style="display: none;" data-budgetexpense-id="{{current_budget.id}}">
     <div class="row g-3">              
-    
+        <!-- dont allow a user to change the expense midway
         <div class="col-md-6 ">      
             <label for="editExpense">Choose Expense</label>          
             <select class="form-select" id="editExpense" name="Expense">
-                <option value=""></option>
+                {% for expense in expenses %}
+                <option value="{{expense.id}}">{{expense.name}}</option>
+                {% endfor %}
             </select>          
         </div>
-
+        -->
         <div class="col-md-6">
             <label for="Expectedamount">Expected Amount</label>           
             <input class="form-control" id="editExpectedamount" name="editExpectedamount" placeholder="Expected Amount" required type="number" min="0">           
@@ -199,4 +210,5 @@
 <script src="/static/script/budget.js"></script>
 <script src="/static/script/createBudgetExpense.js"></script>
 <script src="/static/script/searchBudgetExpenses.js"></script>
+<script src="/static/script/editDeleteBudgetExpense"></script>
 {% endblock %}

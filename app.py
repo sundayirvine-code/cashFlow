@@ -1304,6 +1304,73 @@ def search_budget_by_year_month():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
+@app.route('/edit_budget_expense', methods=['POST'])
+def edit_budget_expense():
+    try:
+        data = request.get_json()
+        budget_expense_id = data['budget_expense_id']
+        budget_id = data['budget_id']
+        expenseId = data['expenseId']
+        edited_expected_amount = data['edited_expected_amount']
+
+        print(budget_expense_id, budget_id, expenseId, edited_expected_amount)
+
+        budget_expense = db.session.query(BudgetExpense).filter_by(
+            id=budget_expense_id,
+            budget_id=budget_id,
+            expense_id=expenseId
+        ).first()
+
+        if budget_expense:
+            # Update the expected amount
+            budget_expense.expected_amount = edited_expected_amount
+            
+            # Commit the changes to the database
+            db.session.commit()
+
+            budget_expense = db.session.query(BudgetExpense).filter_by(
+                id=budget_expense_id,
+                budget_id=budget_id,
+                expense_id=expenseId
+            ).first()
+            edited_expected_amount = "{:,.2f}".format(budget_expense.expected_amount)
+
+            # Return the updated expected amount in the response
+            return jsonify({'updated_expected_amount': edited_expected_amount, 
+                            'message': 'BudgetExpense edited successfully'}), 200
+
+        else:
+            return jsonify({'error': 'BudgetExpense not found'}), 404
+
+    except Exception as e:
+        # Handle errors and return an error response
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/delete_budget_expense', methods=['POST'])
+def delete_budget_expense():
+    try:
+        data = request.get_json()
+        budget_expense_id = data['budget_expense_id']
+
+        print(budget_expense_id)
+
+        budget_expense = db.session.query(BudgetExpense).filter_by(id=budget_expense_id).first()
+
+        if budget_expense:
+            # Delete the BudgetExpense record
+            db.session.delete(budget_expense)
+            db.session.commit()
+
+            # Return a success message in the response
+            return jsonify({'message': 'BudgetExpense deleted successfully'}), 200
+
+        else:
+            return jsonify({'error': 'BudgetExpense not found'}), 404
+
+    except Exception as e:
+        # Handle errors and return an error response
+        return jsonify({'error': str(e)}), 500
+    
 
 if __name__ == '__main__':
     with app.app_context():
