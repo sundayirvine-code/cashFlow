@@ -1070,6 +1070,31 @@ def delete_expense_transaction():
         return jsonify({'error': 'Transaction not found.'}), 404
 
     try:
+        # Check if the transaction is associated with a budget
+        if transaction.date and transaction.expense_id:
+            # Extract the month and year from the transaction's date
+            transaction_month = get_month_name(transaction.date.month)
+            transaction_year = transaction.date.year
+
+            # Find the corresponding budget
+            budget = Budget.query.filter_by(
+                user_id=current_user.id,
+                month=transaction_month,
+                year=transaction_year
+            ).first()
+
+            if budget:
+                # Find the BudgetExpense entry with the same budget and expense_id
+                budget_expense = BudgetExpense.query.filter_by(
+                    budget_id=budget.id,
+                    expense_id=transaction.expense_id
+                ).first()
+
+                if budget_expense:
+                    # Subtract the transaction amount from spent_amount
+                    budget_expense.spent_amount -= transaction.amount
+                    db.session.commit()
+
         # Use the CashOut model method to delete the transaction
         transaction.delete_transaction()
     except Exception as e:
@@ -1078,6 +1103,7 @@ def delete_expense_transaction():
 
     # Return a response indicating success
     return jsonify({'message': 'Expense transaction deleted successfully'}), 200
+
 
 
 # Budget Magement ------------------------------------------------------------------------
