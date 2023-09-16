@@ -67,6 +67,20 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
         return; // Stop further execution
     }
 
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // Months are 0-based, so add 1 to get the current month
+    console.log(currentYear, currentMonth);
+    const dateParts = newDate.split(" ")[0].split("-");
+    const year = parseInt(dateParts[0]);
+    const month = parseInt(dateParts[1]);
+    
+
+    if (year !== currentYear || month !== currentMonth) {
+        // Date is not in the current month and year, display an error message
+        alert('Please select a date within the current month and year.');
+        return; // Stop further execution
+    }
+
     if (newAmount < 0) {
         // Amount is negative, display an error message
         alert('Please enter a non-negative amount.');
