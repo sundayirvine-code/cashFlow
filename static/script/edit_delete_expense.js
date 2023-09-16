@@ -19,16 +19,20 @@ function displaySuccessMessage(message) {
 
 // Handle edit transaction button click
 let transactionId = 0;
+let categoryId = 0;
+let categoryName = '';
+let amount = 0;
 document.querySelectorAll('.edit-transaction').forEach(editButton => {
     editButton.addEventListener('click', () => {
         // Extract data attributes from the edit icon
         transactionId = editButton.getAttribute('data-transaction-id');
         const description = editButton.getAttribute('data-description');
-        const amount = editButton.getAttribute('data-amount');
+        amount = editButton.getAttribute('data-amount');
         const date = editButton.getAttribute('data-date');
-;
+        categoryId = editButton.getAttribute('data-categoryId'); 
+        categoryName = editButton.getAttribute('data-categoryname');
 
-        console.log('Originals:', transactionId, description, amount, date);
+        console.log('Originals:', transactionId, description, amount, date, categoryId, categoryName);
 
         // Populate the edit form with data from the row
         document.getElementById('Editdate').value = date;
@@ -74,13 +78,15 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
         alert('Description should not exceed 100 characters.');
         return; // Stop further execution
     }
-
+    console.log(newAmount, parseFloat(amount.replace(/,|\/=|\s/g, '')))
     // Construct a JSON object with the data
     const data = {
         transaction_id: transactionId,
         new_date: newDate,
         new_amount: newAmount,
         new_description: newDescription,
+        expense_id: categoryId,
+        amount_diff: (newAmount - parseFloat(amount.replace(/,|\/=|\s/g, '')))
     };
 
     // Send a POST request to the edit route

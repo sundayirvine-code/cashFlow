@@ -962,9 +962,10 @@ def edit_expense_transaction():
     new_date_str = data.get('new_date')
     new_amount = data.get('new_amount')
     new_description = data.get('new_description')
-    #new_category_id = data.get('new_category_id')
+    expense_id = data.get('expense_id')
+    amount_diff = data.get('amount_diff')
 
-    print(transaction_id, new_description, new_date_str, new_amount)
+    print(transaction_id, new_description, new_date_str, new_amount, expense_id, amount_diff)
 
     # Perform validation checks
 
@@ -995,6 +996,42 @@ def edit_expense_transaction():
     transaction = CashOut.query.get(transaction_id)
     if not transaction:
         return jsonify({'error': 'Transaction not found.'}), 404
+    # Extract month and year from the new date
+    new_month = get_month_name(new_date.month)
+    new_year = new_date.year
+    print('Budget dates', new_month, new_year)
+    # Find the current user's budget for the same month and year, if it exists
+    budget = Budget.query.filter_by(
+        user_id=current_user.id,
+        month=new_month,
+        year=new_year
+    ).first()
+
+    print('Budget to update', budget)
+    if budget:
+        # Find the BudgetExpense entry with the same budget and expense_id
+        budget_expense = BudgetExpense.query.filter_by(
+            budget_id=budget.id,
+            expense_id=expense_id
+        ).first()
+        print('Budget Expense to update', budget_expense )
+        if budget_expense:
+            print(amount_diff)
+            try:
+                
+                # Update the spent amount in BudgetExpense using the amount_diff
+                if amount_diff < 0:
+                    # If amount_diff is negative, subtract it from spent_amount
+                    budget_expense.spent_amount -= abs(amount_diff)
+                elif amount_diff > 0:
+                    # If amount_diff is positive, add it to spent_amount
+                    budget_expense.update_spent_amount(amount_diff)
+                db.session.commit()
+                #print('Budget Expense to updated spent amount', budget_expense.spent_amount)
+            except Exception as e:
+                db.session.rollback()
+                print('Error updating the spent amount in BudgetExpense')
+                return jsonify({'error': 'Error updating the spent amount in BudgetExpense.'}), 500
 
     # Perform the edit operation on the transaction using the CashOut model
     try:
