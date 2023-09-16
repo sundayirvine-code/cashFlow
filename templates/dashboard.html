@@ -102,7 +102,16 @@
                 </div>
                 <div id="balanceBox">
                     <p>Current Balance</p>
-                    <div style="color:{% if total_balance > 0 %}#bfd220{% else %}#f5599a{% endif %} ;">{{"{:,.2f}/=".format(total_balance)}} </div>  
+                    <div style="color:
+                    {% if total_balance > 0 %}
+                        #bfd220
+                    {% elif total_balance == 0 %}
+                        gray
+                    {% else %}
+                        #f5599a
+                    {% endif %} ;">
+                    {{"{:,.2f}/=".format(total_balance)}} 
+                    </div>  
                 </div>
             </div>
             <div id="transactionHistoryBox">

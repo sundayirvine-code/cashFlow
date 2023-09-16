@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create a chart using Chart.js
         const ctx = canvas.getContext('2d');
         const budgetData = {
-            labels: ['Total actual', 'Total expected'],
+            labels: ['Total actual', 'Total estimate'],
             datasets: [{
                 data: [actualAmount, expectedAmount],
                 backgroundColor: ['#bfd220', '#f95395'], // Use your desired colors

@@ -805,10 +805,10 @@ def create_expense_transaction():
             raise ValueError("No outstanding credit found for the specified debtor.")
 
         # Check if the budget for the current month and year exists
-        current_month = datetime.now().month
+        current_month = get_month_name(datetime.now().month)
         current_year = datetime.now().year
         current_budget = Budget.query.filter_by(user_id=user_id, month=current_month, year=current_year).first()
-        print(current_budget)
+        print('current affected budget', current_budget)
 
         if current_budget:
             # Check if the expense is listed in the current month's BudgetExpense
@@ -820,9 +820,9 @@ def create_expense_transaction():
                 try:
                     print(budget_expense.spent_amount, amount)
                     # Update the spent amount in the BudgetExpense model
-                    budget_expense.update_spent_amount(amount)
+                    budget_expense.spent_amount += amount
                     db.session.commit()
-                    db.session.refresh(budget_expense)
+                    #db.session.refresh(budget_expense)
                     print(budget_expense.spent_amount)
                     
                     print(BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first().spent_amount)
