@@ -26,24 +26,15 @@ document.querySelectorAll('.edit-transaction').forEach(editButton => {
         const description = editButton.getAttribute('data-description');
         const amount = editButton.getAttribute('data-amount');
         const date = editButton.getAttribute('data-date');
-        const categoryId = editButton.getAttribute('data-categoryId'); 
-        const categoryName = editButton.getAttribute('data-categoryname');
+;
 
-        console.log('Originals:', transactionId, description, amount, date, categoryId, categoryName);
+        console.log('Originals:', transactionId, description, amount, date);
 
         // Populate the edit form with data from the row
         document.getElementById('Editdate').value = date;
         document.getElementById('Editamount').value = parseFloat(amount.replace(/,|\/=|\s/g, ''));
         document.getElementById('Editdescription').value = description;
 
-        // Preselect the category based on category ID
-        const categorySelect = document.getElementById('editExpenseCategory');
-        for (let i = 0; i < categorySelect.options.length; i++) {
-            if (categorySelect.options[i].value === categoryId) {
-                categorySelect.selectedIndex = i;
-                break;
-            }
-        }
 
         // Display the edit form
         document.getElementById('modal-edit').style.display = 'block';
@@ -56,12 +47,11 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
     const newDate = document.getElementById('Editdate').value;
     const newAmount = parseFloat(document.getElementById('Editamount').value); // Parse as a float
     const newDescription = document.getElementById('Editdescription').value;
-    const newCategoryId = document.getElementById('editExpenseCategory').value;
 
-    console.log('Edits:', newDate, newAmount, newDescription, newCategoryId);
+    console.log('Edits:', newDate, newAmount, newDescription);
 
     // Perform data validations
-    if (!newDate || !newAmount || !newCategoryId) {
+    if (!newDate || !newAmount) {
         // Required fields are missing, display an error message
         alert('Please fill in all required fields.');
         return; // Stop further execution
@@ -91,7 +81,6 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
         new_date: newDate,
         new_amount: newAmount,
         new_description: newDescription,
-        new_category_id: newCategoryId,
     };
 
     // Send a POST request to the edit route
@@ -116,7 +105,6 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
 
                 if (tableRow) {
                     // Update the table row data with the new data
-                    tableRow.querySelector('td:nth-child(2)').textContent = editedTransaction.new_category_name; // Column 2 (Category Name)
                     tableRow.querySelector('td:nth-child(3)').textContent = editedTransaction.new_description;   // Column 3 (Description)
                     tableRow.querySelector('td:nth-child(4)').textContent = editedTransaction.new_date;          // Column 4 (Date)
                     tableRow.querySelector('td:nth-child(5)').textContent = editedTransaction.new_amount;        // Column 5 (Amount)
@@ -128,7 +116,6 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
                     editIcon.setAttribute('data-description', editedTransaction.new_description);
                     editIcon.setAttribute('data-date', editedTransaction.new_date);
                     editIcon.setAttribute('data-amount', editedTransaction.new_amount);
-                    editIcon.setAttribute('data-categoryname', editedTransaction.new_category_name);
 
                     // Hide the edit form
                     document.getElementById('modal-edit').style.display = 'none';

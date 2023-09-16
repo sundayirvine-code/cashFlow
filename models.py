@@ -146,12 +146,11 @@ class CashOut(db.Model):
 
     settled_debt = db.relationship('Debt', back_populates='cash_out_transactions')
 
-    def update_transaction(self, new_description, new_amount, new_date, new_expense_id):
+    def update_transaction(self, new_description, new_amount, new_date):
         # Update the transaction attributes
         self.description = new_description
         self.amount = new_amount
         self.date = new_date
-        self.expense_id = new_expense_id
         db.session.commit()
 
     def delete_transaction(self):

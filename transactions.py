@@ -367,29 +367,28 @@ def update_budget_expense_with_cashout(cashout_id):
     if not expense:
         return "Associated expense not found."
 
-    # Get the current month's budget for the user
+    '''# Get the current month's budget for the user
     today = datetime.today()
     current_year = today.year
-    current_month = today.month
+    current_month = today.month'''
 
-    if cashout.date.year != current_year or cashout.date.month != current_month:
-        # try to get the associated budget when this is returned.
-        return "CashOut transaction is not in the current Budget's year and month."
+    
     
     # Get the current month's budget for the user
-    budget = Budget.query.filter_by(user_id=cashout.user_id, year=current_year, month=current_month).first()
+    budget = Budget.query.filter_by(user_id=cashout.user_id, year=cashout.date.year, month=cashout.date.month).first()
 
+    print('testing budget found', budget)
     if not budget:
-        return "Budget for the current month not found."
+        return "No Budget exists for that transaction."
 
     # Check if the associated expense is part of the budget
     budget_expense = BudgetExpense.query.filter_by(budget_id=budget.id, expense_id=expense.id).first()
 
     if not budget_expense:
-        return "Associated expense is not part of the budget for the current month."
+        return "Associated expense is not part of the budget"
 
     # Update the spent_amount of the BudgetExpense
-    budget_expense.spent_amount += cashout.amount
+    budget_expense.update_spent_amount(cashout.amount) 
 
     try:
         db.session.commit()

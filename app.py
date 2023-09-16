@@ -959,17 +959,17 @@ def edit_expense_transaction():
 
     # Extract data from the JSON request
     transaction_id = data.get('transaction_id')
-    new_date_str = data.get('new_date')  # Date as string
+    new_date_str = data.get('new_date')
     new_amount = data.get('new_amount')
     new_description = data.get('new_description')
-    new_category_id = data.get('new_category_id')
+    #new_category_id = data.get('new_category_id')
 
-    print(transaction_id, new_description, new_date_str, new_amount, new_category_id)
+    print(transaction_id, new_description, new_date_str, new_amount)
 
     # Perform validation checks
 
     # Check if all required fields are provided
-    if not (new_date_str and new_amount and new_category_id):
+    if not (new_date_str and new_amount):
         return jsonify({'error': 'Please provide all required fields.'}), 400
 
     # Convert new_date_str to a Python date object
@@ -996,28 +996,22 @@ def edit_expense_transaction():
     if not transaction:
         return jsonify({'error': 'Transaction not found.'}), 404
 
-    category = Expense.query.get(new_category_id)
-    if not category:
-        return jsonify({'error': 'Expense category not found.'}), 404
-
     # Perform the edit operation on the transaction using the CashOut model
     try:
-        transaction.update_transaction(new_description, new_amount, new_date, new_category_id)
+        transaction.update_transaction(new_description, new_amount, new_date)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Error editing the transaction.'}), 500
     
-    new_category_name = Expense.query.get(transaction.expense_id).name
 
     # Return the edited transaction details in the response
     edited_transaction = {
         'transaction_id': transaction.id,
         'new_date': transaction.date.strftime('%Y-%m-%d'),
-        'new_amount': "{:,.2f}/=".format(transaction.amount),  # Format as float with two decimal places
+        'new_amount': "{:,.2f}/=".format(transaction.amount),
         'new_description': transaction.description,
         'new_category_id': transaction.expense_id,
-        'new_category_name': new_category_name,
     }
 
     return jsonify({'message': 'Expense transaction updated successfully', 'edited_transaction': edited_transaction}), 200
