@@ -5,6 +5,7 @@
     height: 100vh;
     background-color: #141c33;
     color: #ffffff;
+    overflow: hidden;
 }
 
 #mainContainer {
@@ -153,6 +154,12 @@ tr:hover{
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+@media (max-width: 585px) {
+    #transactionBox::-webkit-scrollbar{
+        height: 5px;
+    }
 }
 
 /* Style the scrollbar track */
