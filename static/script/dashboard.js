@@ -57,11 +57,17 @@ async function renderChart() {
                     },
                     title: {
                         display: true,
-                        text: 'Income Breakdown', // Set your chart title here
+                        text: 'Income Breakdown',
+                        position: 'bottom',
+                        align: 'start',
                         font: {
-                            size: 15, // Set the font size for the title
+                            size: 12, // Set the font size for the title
                             weight: 'bold', // Set the font weight (optional)
                         },
+                        padding: {
+                            top: 3,
+                            bottom: 0,
+                        }
                     },
                     tooltip: {
                         callbacks: {
@@ -104,11 +110,17 @@ async function renderChart() {
                     },
                     title: {
                         display: true,
-                        text: 'Expense Breakdown', // Set your chart title here
+                        text: 'Expense Breakdown',
+                        position: 'bottom',
+                        align: 'start',
                         font: {
-                            size: 15, // Set the font size for the title
+                            size: 12, // Set the font size for the title
                             weight: 'bold', // Set the font weight (optional)
                         },
+                        padding: {
+                            top: 3,
+                            bottom: 0
+                        }
                     },
                     tooltip: {
                         callbacks: {

@@ -44,7 +44,6 @@
 }
 
 #navbar, #main{
-    border-radius: 10px;
     flex: 1;
 }
 
@@ -85,6 +84,9 @@
 #main{
     flex-basis: calc(100% - 200px);
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 #chartbox{
@@ -107,7 +109,7 @@
 }
 
 #transactionBox{
-    max-height: calc(100vh - 337px);
+    max-height: calc(100vh - 313px);
     overflow-y: scroll;
 }
 
@@ -122,17 +124,13 @@ tr:hover{
     overflow-x: auto;
 }
 
-#chartbox, #transactionHistoryBox, #incomeExpenseBalanceBox{   
-    border-radius: 10px;
-}
-
 
 #expenseChart, #incomeChart, #extraChart{
     min-width: calc(100% / 3.04);
     background-color: #2c325c;
-    border-radius: 10px;
     min-height: 180px;
     max-height: 180px;
+    padding: 5px;
 }
 
 #incomeExpenseBalanceBox{
@@ -147,7 +145,6 @@ tr:hover{
     width: calc(100%/3);
     min-width: fit-content;
     background-color: #2c325c;
-    border-radius: 10px;
     min-height: 100px;
     max-height: 100px;
     display: flex;
@@ -170,7 +167,6 @@ tr:hover{
   /* Style the scrollbar thumb (the draggable part) */
   #incomeExpenseBalanceBox::-webkit-scrollbar-thumb, #chartbox::-webkit-scrollbar-thumb{
     background-color: #888; 
-    border-radius: 6px;
   }
   
   /* Change the color of the scrollbar thumb on hover */
@@ -207,7 +203,6 @@ tr:hover{
 
 #transactionBox{
     background-color: #2c325c;
-    border-radius: 10px;
 }
 
 @media (max-width: 850px) {
