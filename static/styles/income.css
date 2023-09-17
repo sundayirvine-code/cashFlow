@@ -127,6 +127,14 @@ tr:hover{
     gap: 12px;
 }
 
+.from label, .to label, #dateRangePickerFrom, #dateRangePickerTo, #searchButton{
+    font-size: 12px !important;
+}
+
+#dateRangePickerFrom, #dateRangePickerTo{
+    width: 100%;
+}
+
 .from, .to{
     flex: 1 0 120px;
 }
