@@ -156,34 +156,46 @@ def calculate_savings_between_dates(user_id, start_date=None, end_date=None):
     return savings, savings_percent_of_income
 
 def calculate_expense_percentage_of_income(user_id, start_date=None, end_date=None):
-    """
-    Calculate the percentage of total income that each expense takes within a specified date range.
+    from models import Expense, CashOut, db
+    from sqlalchemy import func
 
-    Args:
-        user_id (int): The user's ID.
-        start_date (date, optional): The start date of the range.
-        end_date (date, optional): The end date of the range.
+    if start_date is None:
+        start_date = date(datetime.now().year, datetime.now().month, 1)
+    if end_date is None:
+        end_date = date.today()
 
-    Returns:
-        dict: A dictionary containing expense names as keys and their corresponding percentage of total income as values.
-        float: The percentage of total expenses as compared to total income.
-
-    """
-    total_expenses, individual_expenses = calculate_total_expenses_between_dates(user_id, start_date, end_date)
+    # Step 1: Calculate total income
     total_income, _ = calculate_total_income_between_dates(user_id, start_date, end_date)
-
-    expense_percentages = {}
-    for expense in individual_expenses:
-        expense_percent = (expense['amount'] / total_income) * 100 if total_income != 0 else 0
-        expense_percentages[expense['name']] = round(expense_percent, 2)
-
-    total_expense_percent_of_income = (total_expenses / total_income) * 100 if total_income != 0 else 0
-
-    total_expense_percent_of_income = round(total_expense_percent_of_income, 2)
-    # Sort expenses by percentage in descending order
-    expense_percentages = sorted(expense_percentages.items(), key=lambda x: x[1], reverse=True)
-
-    return expense_percentages, total_expense_percent_of_income
+    
+    # Step 2: Join CashOut and Expense models
+    cash_out_expense_join = db.session.query(CashOut, Expense).join(
+        Expense, CashOut.expense_id == Expense.id
+    )
+    
+    # Step 3: Group cash out transactions by expense_id and calculate the sum of amount
+    expense_sums = cash_out_expense_join.filter(
+        CashOut.user_id == user_id,
+        CashOut.date >= start_date,
+        CashOut.date <= end_date
+    ).group_by(Expense.id).with_entities(
+        Expense.id,
+        Expense.name,
+        func.sum(CashOut.amount).label('total_amount')
+    ).all()
+    
+    # Step 4 and 5: Calculate percentage of each expense category's total to total income
+    expense_percentages = []
+    for expense_sum in expense_sums:
+        expense_id, expense_name, total_amount = expense_sum
+        percentage = (total_amount / total_income) * 100 if total_income > 0 else 0
+        expense_percentages.append({
+            'expense_id': expense_id,
+            'expense_name': expense_name,
+            'total_amount': total_amount,
+            'percentage': percentage
+        })
+    
+    return expense_percentages
 
 
 

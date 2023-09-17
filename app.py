@@ -117,17 +117,20 @@ def logout():
 @app.route('/chart_data', methods=['POST'])
 def chart_data():
     # Expense Chart
-    expense_percentages, total_expense_percent_of_income = calculate_expense_percentage_of_income(current_user.id)
+    expense_percentages = calculate_expense_percentage_of_income(current_user.id)
 
-        # Extract the top 4 expenses and their percentages
-    top_expenses = expense_percentages[:4]
+    # Sort the expenses by percentage in descending order
+    expense_percentages.sort(key=lambda x: x['percentage'], reverse=True)
 
-    # Sum the percentages of the remaining expenses
-    remaining_percentage = sum(x[1] for x in expense_percentages[4:])
+    # Extract the top 6 expenses and their percentages
+    top_expenses = expense_percentages[:6]
+
+    # Calculate the total percentage of the remaining expenses
+    remaining_percentage = sum(expense['percentage'] for expense in expense_percentages[6:])
 
     # Create labels and values for the chart
-    labels = [expense[0] for expense in top_expenses] + ['Others']
-    values = [expense[1] for expense in top_expenses] + [remaining_percentage]
+    labels = [expense['expense_name'] for expense in top_expenses] + ['Others']
+    values = [expense['percentage'] for expense in top_expenses] + [remaining_percentage]
 
     colors = ['#ffb65d', '#465bca', '#9d3171', '#3eeed0', '#ff5497']
     expense_chart_data = {
@@ -135,7 +138,6 @@ def chart_data():
         'values': values,
         'colors': colors,
     }
-
 
     # Income chart
     # Query the contribution of each category to the user's total income
