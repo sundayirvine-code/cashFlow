@@ -816,16 +816,17 @@ def create_expense_transaction():
             # Check if the expense is listed in the current month's BudgetExpense
             budget_expense = BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first()
 
-            print(budget_expense)
+            print('buget expense to update:....................',budget_expense)
 
             if budget_expense:
                 try:
-                    print(budget_expense.spent_amount, amount)
+                    print('before updation.................',budget_expense.spent_amount, amount)
                     # Update the spent amount in the BudgetExpense model
-                    budget_expense.spent_amount += amount
+                    amount = int(amount) if amount else 0.0
+                    budget_expense.update_spent_amount(amount)
                     db.session.commit()
-                    #db.session.refresh(budget_expense)
-                    print(budget_expense.spent_amount)
+                    
+                    print('after updation...................',budget_expense.spent_amount)
                     
                     print(BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first().spent_amount)
                 except Exception as e:
@@ -1156,14 +1157,8 @@ def budget():
     budgets = Budget.query.filter_by(user_id=user_id).all()
 
     print('Dates ------------',current_year, current_month)
-    # Query for the current budget
-    current_budget = Budget.query.filter_by(
-        user_id=user_id,
-        year=current_year,
-        month=current_month
-    ).first()
-    
-    print('current budget ------------',current_budget)
+    current_budget = None
+
     budget_with_totals = []
 
     print('budgets ------------',budgets)
