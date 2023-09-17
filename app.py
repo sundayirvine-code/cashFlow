@@ -132,7 +132,7 @@ def chart_data():
     labels = [expense['expense_name'] for expense in top_expenses] + ['Others']
     values = [expense['percentage'] for expense in top_expenses] + [remaining_percentage]
 
-    colors = ['#ffb65d', '#465bca', '#9d3171', '#3eeed0', '#ff5497']
+    colors = ['#ffb65d', '#465bca', '#9d3171', '#3eeed0', '#ff5497', '#309a6a', '#141c33']
     expense_chart_data = {
         'labels': labels,
         'values': values,
@@ -186,7 +186,7 @@ def chart_data():
     # Initialize lists to store labels, values, and colors for the income chart
     income_labels = []
     income_values = []
-    income_colors = ['#ffb65d', '#465bca', '#9d3171', '#3eeed0', '#ff5497']
+    income_colors = ['#ffb65d', '#465bca', '#9d3171', '#3eeed0', '#ff5497', '#309a6a', '#141c33']
 
     income_chart_data = {
         'labels': income_labels,
