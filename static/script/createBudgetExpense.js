@@ -52,6 +52,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     // Handle the response, e.g., display a success message
                     console.log('Budget expense created:', data);
+                    if(data.error){
+
+                        // Display the error message
+                        errorMessage=document.getElementById('errorMessage');
+                        errorMessage.textContent = 'Budget expense must be unique';
+                        errorMessage.style.display = 'block';
+                        errorMessage.style.opacity = '1'; 
+
+                        // Use setTimeout to hide the message after a delay
+                        setTimeout(() => {
+                            errorMessage.style.opacity = '0';
+                            setTimeout(() => {
+                                errorMessage.style.display = 'none';
+                            }, 500);
+                        }, 2000);
+                        document.getElementById('modal-create').style.display='none'
+                        return;
+
+                    }
                     // Close the modal
                     const modalCreate = document.getElementById('modal-create');
                     if (modalCreate) {
@@ -107,7 +126,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Handle errors
                     console.error('Error creating budget expense:', error);
                     // Display an error message
-                    // You can add error handling logic here
+                    errorMessage=document.getElementById('errorMessage');
+                    errorMessage.textContent = 'Budget Expense created successfully';
+                    errorMessage.style.display = 'block';
+                    errorMessage.style.opacity = '1'; 
+
+                    // Use setTimeout to hide the message after a delay
+                    setTimeout(() => {
+                        errorMessage.style.opacity = '0';
+                        setTimeout(() => {
+                            errorMessage.style.display = 'none';
+                        }, 500);
+                    }, 2000);
                 });
             } else {
                 alert('All fields must be provided. Amount should be a positve number')
