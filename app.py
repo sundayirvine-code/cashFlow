@@ -8,6 +8,7 @@ from datetime import date, datetime
 from calculations import calculate_total_income_between_dates, calculate_total_expenses_between_dates, calculate_expense_percentage_of_income
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import func
+from titlecase import titlecase
 
 
 # Configuration
@@ -238,9 +239,6 @@ def dashboard():
         # Calculate total balance
         total_balance = total_income - total_expenses
 
-        
-
-
         return render_template('dashboard.html', 
                                total_income=total_income, 
                                total_expenses=total_expenses, 
@@ -266,27 +264,20 @@ def income():
         Filter Income transactions by category
         '''
         try:
-            # Handle AJAX POST request to retrieve transactions by category
             category_name = request.json.get('category_name')
-            print(category_name)
-
             user_id = current_user.id
 
             # Find the income category ID for the given category name and current user
             if   category_name == 'Debt':
                 income_category = Income.query.filter_by(user_id=0, name=category_name).first()
-                print(income_category)
             else:
                 income_category = Income.query.filter_by(user_id=user_id, name=category_name).first()
 
             if income_category:
-                if category_name == 'Debt':
+                if category_name == 'Debt': # Debt is the first income category for all users
                     income_category_id = 1
-
                 else:
                     income_category_id = income_category.id
-
-                print(income_category_id)
 
                 # Query CashIn transactions for the specified income category ID and user ID
                 transactions = CashIn.query.filter_by(income_id=income_category_id, user_id=user_id).all()
@@ -304,7 +295,9 @@ def income():
                         'description': transaction.description
                     })
 
-                return jsonify({'transactions': transaction_data, 'total': "{:,.2f}/=".format(total)})
+                return jsonify({'transactions': transaction_data, 
+                                'total': "{:,.2f}/=".format(total)
+                                }), 200
             
             else:
                 return jsonify({'error': 'Category not found for the current user'}), 404
@@ -324,9 +317,12 @@ def income():
     income_categories.insert(0, Income(id=1, user_id=0, name='Debt'))
     transaction_form.incomeCategory.choices = [(ic.id, ic.name) for ic in income_categories]
 
+    # Calculates total income including debt
     income_totals = calculate_income_totals_formatted_debt(current_user.id)
 
     total_income, individual_incomes = calculate_total_income_between_dates(current_user.id)
+
+    '''CONFIRM THE TWO TOTALS ARE THE SAME'''
 
     # Prepare the data in the desired format
     income_transactions = [
@@ -350,13 +346,13 @@ def income():
     return render_template('income.html', 
                            category_form=category_form, 
                            transaction_form=transaction_form,
-                           income_types=income_types, 
+                           income_types=income_types, # create income category form
                            income_categories=income_categories, # form data
                            income_totals=income_totals, # card data
-                           income_transactions=income_transactions,
-                           total_income="{:,.2f}/=".format(total_income),
-                           from_date=from_date_formatted,
-                           to_date=to_date_formatted) 
+                           income_transactions=income_transactions, # Table
+                           total_income="{:,.2f}/=".format(total_income), # Summary
+                           from_date=from_date_formatted, # summary
+                           to_date=to_date_formatted)  # summary
 
 # create an income category
 @login_required
@@ -1108,7 +1104,6 @@ def delete_expense_transaction():
     return jsonify({'message': 'Expense transaction deleted successfully'}), 200
 
 
-
 # Budget Magement ------------------------------------------------------------------------
 def get_month_name(month_number):
     # Map month numbers to their names
@@ -1412,6 +1407,7 @@ def search_budget_by_year_month():
         return jsonify({'error': str(e)}), 500
     
 @app.route('/edit_budget_expense', methods=['POST'])
+@login_required
 def edit_budget_expense():
     try:
         data = request.get_json()
@@ -1454,6 +1450,7 @@ def edit_budget_expense():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/delete_budget_expense', methods=['POST'])
+@login_required
 def delete_budget_expense():
     try:
         data = request.get_json()
@@ -1478,6 +1475,74 @@ def delete_budget_expense():
         # Handle errors and return an error response
         return jsonify({'error': str(e)}), 500
     
+# Credit Magement ------------------------------------------------------------------------
+@app.route('/credit', methods=['GET', 'POST'])
+@login_required
+def credit():
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+
+            # Extract data from JSON
+            debtor = data.get('debtor')
+            amount = data.get('amount')
+            date_taken = data.get('dateTaken')
+            date_due = data.get('dateDue')
+            description = data.get('description')
+
+            # Trim and convert debtor name to title case
+            debtor = titlecase(debtor.strip())
+
+            # Convert the date string to a Python date object
+            try:
+                date_taken = datetime.strptime(date_taken, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid date taken provided'}), 400
+            
+            if date_due:
+                try:
+                    date_due = datetime.strptime(date_due, '%Y-%m-%d').date()
+                except ValueError:
+                    return jsonify({'error': 'Invalid date due provided'}), 400
+
+            # Create a new Credit record
+            new_credit = Credit(
+                user_id=current_user.id,
+                debtor=debtor,
+                amount=amount,
+                date_taken=date_taken,
+                date_due=date_due,
+                description=description
+            )
+
+            # Add and commit the new credit record to the database
+            db.session.add(new_credit)
+            db.session.commit()
+
+            # Return the newly created credit record in JSON format
+            response_data = {
+                'id': new_credit.id,
+                'user_id': new_credit.user_id,
+                'debtor': new_credit.debtor,
+                'amount': "{:,.2f}/=".format(new_credit.amount),
+                'date_taken': new_credit.date_taken.strftime('%Y-%m-%d'),
+                'date_due': new_credit.date_due.strftime('%Y-%m-%d') if new_credit.date_due else None,
+                'description': new_credit.description,
+                'is_paid': new_credit.is_paid,
+                'amount_paid': "{:,.2f}/=".format(new_credit.amount_paid)
+            }
+
+            return jsonify(response_data), 201  # Return 201 status code for successful creation
+
+        except Exception as e:
+            # Handle errors and return an error response
+            error_message = str(e)
+            return jsonify({'error': error_message}), 400  # Return 400 status code for bad request
+    # Fetch all rows in the Credit model for the current user, ordered by date_taken
+    credits = Credit.query.filter_by(user_id=current_user.id).order_by(Credit.date_taken.desc()).all()
+    
+    return render_template('credit.html', credits=credits)
+
 
 if __name__ == '__main__':
     with app.app_context():

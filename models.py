@@ -267,18 +267,18 @@ class Debt(db.Model):
 
 class Credit(db.Model):
     """
-    Represents a credit transaction associated with a user. Someone who owes you money
+    Represents a credit associated with a user. Someone who owes you money
 
     Attributes:
         id (int): The unique identifier for the credit transaction.
         user_id (int): The foreign key referencing the associated User.
         debtor (str): The name of the debtor.
         amount (float): The amount of the credit.
-        date (date): The date of the credit transaction.
+        date_taken (date): The date the credit was taken.
         description (str): A description of the credit.
         date_due (date): The date when the credit is due to be received.
         is_paid (bool): Indicates whether the credit has been received (True) or not (False).
-        amount_payed (float): The amount of the credit that has been received.
+        amount_paid (float): The amount of the credit that has been received.
         cash_in_transactions (relationship): One-to-many relationship with CashIn.
     """
 
@@ -286,11 +286,11 @@ class Credit(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     debtor = db.Column(db.String(100), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    date_taken = db.Column(db.Date, nullable=False)
     description = db.Column(db.String(200), nullable=True)
     date_due = db.Column(db.Date, nullable=True)
     is_paid = db.Column(db.Boolean, default=False)
-    amount_payed = db.Column(db.Numeric(10, 2), default=0.0)
+    amount_paid = db.Column(db.Numeric(10, 2), default=0.0)
 
     cash_in_transactions = db.relationship('CashIn', back_populates='settled_credit', cascade='all')
 
@@ -300,6 +300,28 @@ class Credit(db.Model):
 
     def __repr__(self):
         return f"<Credit {self.amount} from {self.debtor} on {self.date}>"
+    
+class DebtorPayment(db.Model):
+    """
+    Represents payment transactions for a particular debtor.
+
+    Attributes:
+        id (int): The unique identifier for the payment transaction.
+        credit_id (int): The foreign key referencing the associated Credit.
+        amount (float): The amount of the payment.
+        date (date): The date of the payment transaction.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    credit_id = db.Column(db.Integer, db.ForeignKey('credit.id'), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+
+    # Define a relationship with the Credit model to associate payments with a specific credit
+    #credit = db.relationship('Credit', back_populates='payments')
+
+    def __repr__(self):
+        return f"<DebtorPayment {self.amount} for Credit {self.credit_id} on {self.date}>"
 
 def initialize_default_income_types():
     """
