@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td>${data.amount}</td>
                     <td>${data.amount_paid}</td>
                     <td>${data.date_due ? data.date_due : ''}</td>
-                    <td>${((data.amount_paid / data.amount) * 100).toFixed(2)}%</td>
+                    <td>0.00%</td>
                     <td class="actions">
                         <!-- Pay button with appropriate data attributes -->
                         <i class="bi bi-credit-card-fill"
@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     });
 
+    let creditId;
     // Attach a click event to all payment icons in the table rows
     const paymentIcons = document.querySelectorAll('.bi-credit-card-fill');
     paymentIcons.forEach(icon => {
@@ -165,6 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const debtorName = event.target.getAttribute('data-debtor-name');
             const debtorPaymentInput = document.getElementById('debtorPayment');
             debtorPaymentInput.value = debtorName;
+            creditId = event.target.getAttribute('data-transaction-id');
 
             // Show the payment form
             const transactionPaymentForm = document.getElementById('transactionPaymentForm');
@@ -189,7 +191,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const debtorPayment = document.getElementById('debtorPayment').value;
         const amountToPay = parseFloat(document.getElementById('amountToPay').value);
         const datePaid = document.getElementById('datePaid').value;
-        const creditId = event.target.getAttribute('data-transaction-id');
 
         // Data validation for amount and date fields
         if (isNaN(amountToPay) || amountToPay <= 0) {
@@ -230,11 +231,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 transactionPaymentForm.style.display = 'none';
 
                 // Update the table with the new amount paid and progress
-                const rowId = event.target.getAttribute('data-transaction-id');
-                const row = document.querySelector(`[data-row-id="${rowId}"]`);
+                const row = document.querySelector(`[data-row-id="${creditId}"]`);
+                console.log(row)
                 // Update the "Amount Paid" and "Progress" columns in the table
-                row.cells[3].textContent = data.amountPaid; // 4th column (0-based index)
-                row.cells[5].textContent = data.progress;   // 6th column (0-based index)
+                row.querySelector('td:nth-child(4)').textContent = data.amountPaid; // 4th column (0-based index)
+                row.querySelector('td:nth-child(6)').textContent = data.progress;   // 6th column (0-based index)
 
                 // Update the payment icon attributes
                 event.target.setAttribute('data-amount-paid', data.amountPaid);

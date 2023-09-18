@@ -1,5 +1,6 @@
 from models import db
 from datetime import datetime
+from decimal import Decimal
 
 def add_income(user_id, income_name, income_type_id):
     """
@@ -173,6 +174,7 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
         end_date = date.today()
 
     income_totals = calculate_income_totals(user_id, start_date, end_date)
+    print('Income totals-----------', income_totals)
 
     # Query unique debtor names for the current user
     debtor_names = (
@@ -191,7 +193,7 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
     debtor_totals = {}
     for debtor_name in unique_debtors:
         total_amount_payed = (
-            db.session.query(db.func.sum(Credit.amount_payed))
+            db.session.query(db.func.sum(Credit.amount_paid))
             .filter_by(user_id=user_id, debtor=debtor_name)
             .scalar()
         )
@@ -201,10 +203,10 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
 
     # Calculate the sum of all amount_payed values in the debtor_totals dictionary
     total_debt_amount = sum(debtor_totals.values())
-
-    # Add the total_debt_amount to the income_totals dictionary with 'Debt' as the key
+    print('Settled credit totals-----------', total_debt_amount)
+    # Add the total_debt_amount to the income_totals dictionary with 'Credit Settled' as the key
     income_totals['Debt'] = total_debt_amount
-  
+    print('Income totals-----------', income_totals)
 
     # Calculate the total income
     total_income = sum(income_totals.values())
@@ -590,7 +592,7 @@ def add_cash_in_transaction(user_id, amount, date, income_id, description=None, 
             if credit_to_settle.is_paid:
                 raise ValueError("The credit is already settled.")
 
-            if credit_to_settle.amount_payed + amount > credit_to_settle.amount:
+            if credit_to_settle.amount_paid + Decimal(amount) > credit_to_settle.amount:
                 raise ValueError("Received amount exceeds the credit amount.")
 
             # Add cash in with all fields populated
@@ -608,10 +610,10 @@ def add_cash_in_transaction(user_id, amount, date, income_id, description=None, 
                 db.session.commit()
 
                 # Update the credit being settled by this transaction
-                credit_to_settle.amount_payed += amount
+                credit_to_settle.amount_paid += Decimal(amount)
 
                 # If received amount equals or exceeds credit amount, mark the credit as settled
-                if credit_to_settle.amount_payed >= credit_to_settle.amount:
+                if credit_to_settle.amount_paid >= credit_to_settle.amount:
                     credit_to_settle.is_paid = True
 
                 db.session.commit()

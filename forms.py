@@ -70,5 +70,5 @@ class IncomeTransactionForm(FlaskForm):
     incomeCategory = SelectField('Choose Category', coerce=int)
     amount = FloatField('Amount', validators=[DataRequired()])
     date = DateField('Date', validators=[DataRequired()])
-    debtor = SelectField('Debtor (optional)', coerce=int)
+    debtor = SelectField('Debtor (optional)')
     description = TextAreaField('Description (optional)')

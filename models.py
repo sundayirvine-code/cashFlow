@@ -299,7 +299,7 @@ class Credit(db.Model):
     )  
 
     def __repr__(self):
-        return f"<Credit {self.amount} from {self.debtor} on {self.date}>"
+        return f"<Credit {self.amount} from {self.debtor} on {self.date_taken}>"
     
 class DebtorPayment(db.Model):
     """

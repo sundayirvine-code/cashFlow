@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const incomeCategory = incomeCategorySelect.value;
         const amount = amountInput.value.trim();
         const date = dateInput.value.trim();
-        const debtor = debtorSelect.value;
+        let debtor = debtorSelect.value;
         const description = descriptionInput.value.trim();
 
         // Validate required fields: incomeCategory, amount, and date
@@ -234,6 +234,10 @@ document.addEventListener("DOMContentLoaded", function () {
             transactionFormError.style.color = "#212529";
             transactionFormError.style.display = "block";
             return;
+        }
+
+        if (debtor && incomeCategory !== '1') {
+            debtor = ''
         }
 
         // Validate description length

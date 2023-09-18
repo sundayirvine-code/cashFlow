@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, abort
 from auth import register_user, authenticate_user
 from forms import RegistrationForm, LoginForm, IncomeCategoryForm, IncomeTransactionForm
-from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut, Budget, BudgetExpense
+from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut, Budget, BudgetExpense, DebtorPayment
 from flask_login import login_required, logout_user, LoginManager, login_user, current_user
 from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction, calculate_income_totals_formatted_debt
 from datetime import date, datetime
@@ -9,7 +9,7 @@ from calculations import calculate_total_income_between_dates, calculate_total_e
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import func
 from titlecase import titlecase
-
+from decimal import Decimal
 
 # Configuration
 app = Flask(__name__)
@@ -144,45 +144,25 @@ def chart_data():
     # Query the contribution of each category to the user's total income
     income_totals = calculate_income_totals(current_user.id)
 
-    '''
-    Include debt as a category that brings in Income
-    '''
-    # Query unique debtor names for the current user
-    debtor_names = (
-        db.session.query(Credit.debtor)
-        .filter_by(user_id=current_user.id)
-        .distinct()
-        .all()
-    )
+    today = date.today()
+    start_date = date(today.year, today.month, 1)
+    end_date = date.today()
 
-    # Extract the debtor names from the query result
-    unique_debtors = [debtor[0] for debtor in debtor_names]
+    # Sum the amount_paid for the current user's debtors since the beginning of the month
+    total_amount_paid = db.session.query(func.sum(Credit.amount_paid)).filter(
+        Credit.user_id == current_user.id,
+        Credit.date_taken >= start_date,
+        Credit.date_taken <= end_date
+    ).scalar()
 
+    if total_amount_paid is None:
+        total_amount_paid = 0
 
-    '''
-    COME BACK HERE WHEN DEALING WITH DEBT
-    '''
-    # Calculate the sum of amount_payed for each debtor
-    debtor_totals = {}
-    for debtor_name in unique_debtors:
-        total_amount_payed = (
-            db.session.query(db.func.sum(Credit.amount_payed))
-            .filter_by(user_id=current_user.id, debtor=debtor_name)
-            .scalar()
-        )
-        if total_amount_payed is None:
-            total_amount_payed = 0
-        debtor_totals[debtor_name] = total_amount_payed
-
-    # Calculate the sum of all amount_payed values in the debtor_totals dictionary
-    total_debt_amount = sum(debtor_totals.values())
-
-    # Add the total_debt_amount to the income_totals dictionary with 'Debt' as the key
-    income_totals['Debt'] = total_debt_amount
+    income_totals['Settled credit'] = total_amount_paid
   
-
     # Calculate the total income
     total_income = sum(income_totals.values())
+    print(total_income)
 
     # Initialize lists to store labels, values, and colors for the income chart
     income_labels = []
@@ -259,13 +239,15 @@ def income():
     Returns:
         str: The rendered HTML template for income management.
     """
+    user_id = current_user.id
+
     if request.method == 'POST':
         '''
         Filter Income transactions by category
         '''
         try:
             category_name = request.json.get('category_name')
-            user_id = current_user.id
+            
 
             # Find the income category ID for the given category name and current user
             if   category_name == 'Debt':
@@ -312,10 +294,22 @@ def income():
     income_types = IncomeType.query.all()
     category_form.incomeType.choices = [(it.id, it.name) for it in income_types]
 
+    # Query unique debtor names for the current user
+    debtor_names = (
+        db.session.query(Credit.debtor)
+        .filter_by(user_id=user_id)
+        .distinct()
+        .all()
+    )
+
+    # Extract the debtor names from the query result
+    unique_debtors = [debtor[0] for debtor in debtor_names]
+
     # Query Income categories for the current user and Populate the incomeCategory field
     income_categories = Income.query.filter_by(user_id=current_user.id).all()
     income_categories.insert(0, Income(id=1, user_id=0, name='Debt'))
     transaction_form.incomeCategory.choices = [(ic.id, ic.name) for ic in income_categories]
+    transaction_form.debtor.choices = [(debtor, debtor) for debtor in unique_debtors]
 
     # Calculates total income including debt
     income_totals = calculate_income_totals_formatted_debt(current_user.id)
@@ -430,7 +424,7 @@ def create_income_transaction():
         if not credit_to_settle and income_category == 1:
             raise ValueError("No outstanding credit found for the specified debtor.")
 
-
+        print('', credit_to_settle)
         # Call the add_cash_in_transaction function with the settled_credit_id
         cash_in = add_cash_in_transaction(
             user_id=user_id,
@@ -441,8 +435,32 @@ def create_income_transaction():
             settled_credit_id=credit_to_settle.id if credit_to_settle else None
         )
 
-        income_category_name = Income.query.get(income_category).name
+        print('Cash in transaction............................', cash_in)
 
+        if credit_to_settle:
+            credit = Credit.query.filter_by(id=credit_to_settle.id, user_id=current_user.id).first()
+
+            print('The credit we will update', credit)
+
+            if not credit:
+                return jsonify({"error": "Credit not found or unauthorized"}), 403
+
+            if credit.is_paid:
+                return jsonify({"error": "Credit is already paid"}), 400
+
+            payment = DebtorPayment(credit_id=credit.id, amount=amount, date=date_obj)
+            print('Payment transaction............................', payment)
+            db.session.add(payment)
+
+            credit.amount_paid += Decimal(amount)
+
+            if credit.amount_paid >= credit.amount:
+                credit.is_paid = True
+
+            db.session.commit()
+
+        income_category_name = Income.query.get(income_category).name
+        print('Cash in transaction............................', cash_in)
         # Construct the JSON response with all required information
         response_data = {
             'message': 'Income transaction created successfully',
@@ -459,9 +477,7 @@ def create_income_transaction():
         # Handle validation errors
         return jsonify({'error': str(e)}), 400
 
-    except Exception as e:
-        # Handle other errors
-        return jsonify({'error': 'An error occurred while creating the income transaction'}), 500
+    
 
 @app.route('/search_income_transactions', methods=['GET'])
 @login_required
@@ -1543,6 +1559,55 @@ def credit():
     
     return render_template('credit.html', credits=credits)
 
+@app.route('/credit/settle', methods=['POST'])
+@login_required
+def settle_credit():
+    try:
+        data = request.json
+        credit_id = int(data['creditId'])  # Convert creditId to integer
+        amount_to_pay = data['amountToPay']  # Convert amountToPay to float
+        date_paid_str = data['datePaid']
+        date_paid = datetime.strptime(date_paid_str, '%Y-%m-%d').date()  # Convert datePaid to a Python date
+
+        credit = Credit.query.filter_by(id=credit_id, user_id=current_user.id).first()
+
+        if not credit:
+            return jsonify({"error": "Credit not found or unauthorized"}), 403
+
+        if credit.is_paid:
+            return jsonify({"error": "Credit is already paid"}), 400
+
+        payment = DebtorPayment(credit_id=credit_id, amount=amount_to_pay, date=date_paid)
+        db.session.add(payment)
+
+        credit.amount_paid += amount_to_pay
+
+        if credit.amount_paid >= credit.amount:
+            credit.is_paid = True
+
+        # Create a CashIn transaction
+        cash_in = CashIn(
+            user_id=current_user.id,
+            income_id=1,  # Assuming income id is 1
+            amount=amount_to_pay,
+            date=date_paid,
+            description="settling {}'s credit".format(credit.debtor),  # Assuming an empty description
+            settled_credit_id=credit.id  # Link the CashIn to the settled credit
+        )
+        db.session.add(cash_in)
+
+        db.session.commit()
+
+        progress = round((credit.amount_paid / credit.amount) * 100, 2)  # Round progress to 2 decimal places
+
+        return jsonify({
+            "amountPaid": "{:,.2f}/=".format(credit.amount_paid),
+            "progress": "{}%".format(progress),
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 
 if __name__ == '__main__':
     with app.app_context():
