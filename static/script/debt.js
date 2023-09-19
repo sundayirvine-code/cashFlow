@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('credit to create', data)
 
         // Send data via POST request to the /credit route
-        fetch('/credit', {
+        fetch('/debt', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 // Handle the response, e.g., display a success message
-                console.log('Credit created:', data);
+                console.log('Debt created:', data);
 
                 // Hide the transaction form
                 transactionForm.style.display = 'none';
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Display the success message
                 const successMessage = document.getElementById('successMessage');
-                successMessage.textContent = 'Credit created successfully';
+                successMessage.textContent = 'Debt created successfully';
                 successMessage.style.display = 'block';
                 successMessage.style.opacity = '1';
 
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => {
                 // Handle errors
-                console.error('Error creating credit:', error);
+                console.error('Error creating debt:', error);
                 // Display the error message
                 const errorMessage = document.getElementById('errorMessage');
                 errorMessage.textContent = `Error creating credit: ${error}`;
@@ -208,13 +208,13 @@ document.addEventListener('DOMContentLoaded', function () {
             debtorPayment: debtorPayment,
             amountToPay: amountToPay,
             datePaid: datePaid,
-            creditId: creditId
+            creditId: creditId,
         };
 
         console.log('Credit to settle:', data);
 
         // Send data via POST request to the /credit/settle route
-        fetch('/credit/settle', {
+        fetch('/debt/settle', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

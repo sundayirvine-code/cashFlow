@@ -250,7 +250,7 @@ class Debt(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     creditor = db.Column(db.String(100), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    date_taken = db.Column(db.Date, nullable=False)
     description = db.Column(db.String(200), nullable=True)
     date_due = db.Column(db.Date, nullable=True)
     is_paid = db.Column(db.Boolean, default=False)
@@ -264,7 +264,26 @@ class Debt(db.Model):
 
 
     def __repr__(self):
-        return f"<Debt {self.amount} to {self.creditor} on {self.date}>"
+        return f"<Debt {self.amount} to {self.creditor} on {self.date_taken}>"
+    
+class CreditorPayment(db.Model):
+    """
+    Represents payment transactions for a particular creditor.
+
+    Attributes:
+        id (int): The unique identifier for the payment transaction.
+        debt_id (int): The foreign key referencing the associated debt.
+        amount (float): The amount of the payment.
+        date (date): The date of the payment transaction.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    debt_id = db.Column(db.Integer, db.ForeignKey('debt.id'), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+
+    def __repr__(self):
+        return f"<CreditorPayment {self.amount} for debt {self.debt_id} on {self.date}>"
 
 class Credit(db.Model):
     """

@@ -182,6 +182,8 @@ def calculate_expense_percentage_of_income(user_id, start_date=None, end_date=No
         Expense.name,
         func.sum(CashOut.amount).label('total_amount')
     ).all()
+
+    print('expense sums..................', expense_sums)
     
     # Step 4 and 5: Calculate percentage of each expense category's total to total income
     expense_percentages = []
@@ -194,6 +196,8 @@ def calculate_expense_percentage_of_income(user_id, start_date=None, end_date=No
             'total_amount': total_amount,
             'percentage': percentage
         })
+
+    print('expense percentages..................', expense_percentages)
     
     return expense_percentages
 

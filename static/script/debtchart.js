@@ -17,7 +17,7 @@ async function renderCreditChart() {
         // Create a chart using Chart.js
         const ctx = canvas.getContext('2d');
         const budgetData = {
-            labels: ['Total paid', 'Total owed'],
+            labels: ['Total paid', 'Total taken'],
             datasets: [{
                 data: [paidAmount, owedAmount],
                 backgroundColor: ['#bfd220', '#f95395'], // Use your desired colors

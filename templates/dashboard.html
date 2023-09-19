@@ -32,7 +32,7 @@
     
                 <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                     <div class="navbar-nav" id="pageLinks">
-                        <a href="#">
+                        <a href="{{ url_for('dashboard') }}">
                             <i class="fas fa-home"></i>
                             <span class="text nav-text">Dashboard</span>
                         </a>
@@ -48,7 +48,7 @@
                             <i class="bi bi-currency-euro"></i>
                             <span class="text nav-text">Credit</span>
                         </a>
-                        <a href="#">
+                        <a href="{{ url_for('debt') }}">
                             <i class="bi bi-currency-yen"></i>
                             <span class="text nav-text">Debt</span>
                         </a>

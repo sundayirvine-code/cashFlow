@@ -5,11 +5,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
-{% block title %}CashFlow | Credit{% endblock %}
+{% block title %}CashFlow | Debt{% endblock %}
 
 {% block content %}
 <div id="top">
-    <h2>Credit Management</h2>
+    <h2>Debt Management</h2>
     <a href="{{ url_for('dashboard') }}" style="color: white;">
         <i class="bi bi-box-arrow-left"></i>
     </a>
@@ -22,33 +22,33 @@
             <div id="totalpaid">
                 <div style="width: 100%;">
                     <p style="margin: 0; font-size: 15px;">Total paid</p>
-                    <div style="color: #bfd220;" id="paidamt">{{ total_amount_paid }}</div>
+                    <div style="color: #bfd220;" id="paidamt">{{ total_amount_returned }}</div>
                 </div>
             </div>
 
             <div id="totalowed">
                 <div style="width: 100%;">
-                    <p style="margin: 0; font-size: 15px;">Total owed</p>
-                    <div style="color: #f5599a;" id="owedamt">{{ total_amount_owed }}</div>
+                    <p style="margin: 0; font-size: 15px;">Total Debt</p>
+                    <div style="color: #f5599a;" id="owedamt">{{ total_amount_received }}</div>
                 </div>
             </div>
 
         </div>
-        <div id="chart" data-totalpaidamount="{{ total_amount_paid }}" data-totalowedamount="{{ total_amount_owed }}">
+        <div id="chart" data-totalpaidamount="{{ total_amount_returned }}" data-totalowedamount="{{ total_amount_received }}">
     
         </div>
     </div>
     
     <main id="main">
         <div id="title">
-            <p>creditors</p>
+            <p>Debtors</p>
             <i class="bi bi-plus-lg" id="create"></i>
         </div>
         <div id="transactionTable" >
             <table class="table table-responsive table-responsive-sm" id="table">
                 <thead class="sticky-top" style="background-color: #485b9b; z-index: 500;">
                     <tr>
-                        <th scope="col">Debtor</th>
+                        <th scope="col">Creditor</th>
                         <th scope="col">Date taken</th>
                         <th scope="col">Amount</th>
                         <th scope="col">Paid</th>
@@ -58,27 +58,27 @@
                     </tr>
                 </thead>
                 <tbody id="transactionTableBody">
-                    {% for credit in credits %}
-                    <tr data-row-id="{{ credit.id }}">
-                        <td>{{ credit.debtor }}</td> 
-                        <td>{{ credit.date_taken.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ "{:,.2f}/=".format(credit.amount) }}</td>
-                        <td>{{ "{:,.2f}/=".format(credit.amount_paid) }}</td>
-                        <td>{{ credit.date_due.strftime('%Y-%m-%d') if credit.date_due else '' }}</td>
-                        <td>{{ ((credit.amount_paid / credit.amount) * 100)|round(2) if credit.amount > 0 else 0 }}%</td>
+                    {% for debit in debits %}
+                    <tr data-row-id="{{ debit.id }}">
+                        <td>{{ debit.creditor }}</td> 
+                        <td>{{ debit.date_taken.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ "{:,.2f}/=".format(debit.amount) }}</td>
+                        <td>{{ "{:,.2f}/=".format(debit.amount_payed) }}</td>
+                        <td>{{ debit.date_due.strftime('%Y-%m-%d') if debit.date_due else '' }}</td>
+                        <td>{{ ((debit.amount_payed / debit.amount) * 100)|round(2) if debit.amount > 0 else 0 }}%</td>
                         <td class="actions">
                             <!-- Pay button with appropriate data attributes -->
                             <i class="bi bi-credit-card-fill"
-                            data-transaction-id="{{ credit.id }}"
-                            data-amount-owed="{{ credit.amount }}"
-                            data-amount-paid="{{ credit.amount_paid }}"
-                            data-debtor-name="{{ credit.debtor }}"
-                            data-date-taken="{{ credit.date_taken.strftime('%Y-%m-%d') }}"
-                            data-date-due="{{ credit.date_due.strftime('%Y-%m-%d') if credit.date_due else '' }}"></i>
+                            data-transaction-id="{{ debit.id }}"
+                            data-amount-owed="{{ debit.amount }}"
+                            data-amount-paid="{{ debit.amount_payed }}"
+                            data-debtor-name="{{ debit.creditor }}"
+                            data-date-taken="{{ debit.date_taken.strftime('%Y-%m-%d') }}"
+                            data-date-due="{{ debit.date_due.strftime('%Y-%m-%d') if debit.date_due else '' }}"></i>
                             
                             <!-- Delete button with appropriate data attribute -->
                             <i class="fas fa-trash-alt delete-transaction"
-                               data-transaction-id="{{ credit.id }}"
+                               data-transaction-id="{{ debit.id }}"
                                aria-hidden="true"></i> 
                         </td>
                     </tr>
@@ -103,11 +103,11 @@
     <button id="modal-content-cancel" class="btn btn-primary col-md-3">Cancel</button>
 </div>
 
-<!-- Form to create a Credit -->
+<!-- Form to create a Debt -->
 <div id="transactionForm" style="display: none;">
 
     <div class="formheader">
-        <h2>Create Credit</h2>
+        <h2>Create Debt</h2>
         <i class="bi bi-x-lg" id="closeTransactionForm"></i>
     </div>
 
@@ -116,7 +116,7 @@
     <form class="row g-3" method="POST" action="#">  
 
         <div class="col-md-6">  
-            <label for="debtor">Debtor</label>
+            <label for="debtor">Creditor</label>
             <input class="form-control" id="debtor" name="debtor" placeholder="Enter debtor" required="" type="text" value="" maxlength="20">                        
         </div>
 
@@ -145,11 +145,11 @@
 </div>
 
 
-<!-- Form to create a Credit payment -->
+<!-- Form to create a Debt payment -->
 <div id="transactionPaymentForm" style="display: none;">
 
     <div class="formheader">
-        <h2>Credit Payment</h2>
+        <h2>Debt Payment</h2>
         <i class="bi bi-x-lg" id="closePaymentForm"></i>
     </div>
 
@@ -158,7 +158,7 @@
     <form class="row g-3" method="POST" action="#">  
 
         <div class="col-md-6">  
-            <label for="debtorPayment">Debtor</label>
+            <label for="debtorPayment">Creditor</label>
             <input class="form-control" id="debtorPayment" name="debtor" placeholder="Enter debtor" required="" type="text" value="" maxlength="20" disabled>                           
         </div>
 
@@ -176,6 +176,6 @@
     </form>
 </div>
 
-<script src="/static/script/credit.js"></script>
-<script src="/static/script/creditchart.js"></script>
+<script src="/static/script/debt.js"></script>
+<script src="/static/script/debtchart.js"></script>
 {% endblock %}

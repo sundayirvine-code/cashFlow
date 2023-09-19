@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, abort
 from auth import register_user, authenticate_user
 from forms import RegistrationForm, LoginForm, IncomeCategoryForm, IncomeTransactionForm
-from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut, Budget, BudgetExpense, DebtorPayment
+from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut, Budget, BudgetExpense, DebtorPayment, CreditorPayment
 from flask_login import login_required, logout_user, LoginManager, login_user, current_user
 from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction, calculate_income_totals_formatted_debt
 from datetime import date, datetime
@@ -24,8 +24,8 @@ pymysql.install_as_MySQLdb()
 # Configuration
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -631,6 +631,21 @@ def expense():
         '''
         Include credit as a category that takes out Income
         '''
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+
+        end_date = date.today()
+
+        total_amount_paid = db.session.query(func.sum(Debt.amount_payed)).filter(
+            Debt.user_id == current_user.id,
+            Debt.date_taken >= start_date,
+            Debt.date_taken <= end_date
+        ).scalar()
+
+        if total_amount_paid is None:
+            total_amount_paid = 0 
+
+        expense_totals['Credit'] = total_amount_paid
     
 
         # Initialize a dictionary to store formatted amounts and percentages
@@ -1604,7 +1619,156 @@ def settle_credit():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+# Debt Magement ------------------------------------------------------------------------
+@app.route('/debt', methods=['GET', 'POST'])
+@login_required
+def debt():
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
 
+            # Extract data from JSON
+            creditor = data.get('debtor')
+            amount = data.get('amount')
+            date_taken = data.get('dateTaken')
+            date_due = data.get('dateDue')
+            description = data.get('description')
+
+            print('creditor data............', creditor, amount, date_due, date_taken, description)
+            # Trim and convert debtor name to title case
+            creditor = titlecase(creditor.strip())
+
+            # Convert the date string to a Python date object
+            try:
+                date_taken = datetime.strptime(date_taken, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid date taken provided'}), 400
+            
+            if date_due:
+                try:
+                    date_due = datetime.strptime(date_due, '%Y-%m-%d').date()
+                except ValueError:
+                    return jsonify({'error': 'Invalid date due provided'}), 400
+
+            # Create a new Debt record
+            new_debt = Debt(
+                user_id=current_user.id,
+                creditor=creditor,
+                amount=amount,
+                date_taken=date_taken,
+                date_due=date_due,
+                description=description
+            )
+
+            # Add and commit the new credit record to the database
+            db.session.add(new_debt)
+            db.session.commit()
+
+            print('New debt created............', creditor, amount, date_due, date_taken, description)
+
+            # Return the newly created credit record in JSON format
+            response_data = {
+                'id': new_debt.id,
+                'user_id': new_debt.user_id,
+                'debtor': new_debt.creditor,
+                'amount': "{:,.2f}/=".format(new_debt.amount),
+                'date_taken': new_debt.date_taken.strftime('%Y-%m-%d'),
+                'date_due': new_debt.date_due.strftime('%Y-%m-%d') if new_debt.date_due else None,
+                'description': new_debt.description,
+                'is_paid': new_debt.is_paid,
+                'amount_paid': "{:,.2f}/=".format(new_debt.amount_payed)
+            }
+
+            return jsonify(response_data), 201  # Return 201 status code for successful creation
+
+        except Exception as e:
+            # Handle errors and return an error response
+            error_message = str(e)
+            return jsonify({'error': error_message}), 400  # Return 400 status code for bad request
+    # Fetch all rows in the Credit model for the current user, ordered by date_taken
+    debits = Debt.query.filter_by(user_id=current_user.id).order_by(Debt.date_taken.desc()).all()
+    print('all Debt records..............', debits)
+
+    total_amount_returned = 0
+
+    total_amount_received = 0
+
+    for debit in debits:
+        total_amount_received += debit.amount
+        total_amount_returned += debit.amount_payed
+
+    print(total_amount_returned, total_amount_received)
+
+    if total_amount_returned is None:
+        total_amount_returned = 0.00 
+
+    if total_amount_received  is None:
+        total_amount_received = 0.00 
+    
+    return render_template('debt.html', 
+                           debits=debits,
+                           total_amount_received=total_amount_received,
+                           total_amount_returned=total_amount_returned)
+
+@app.route('/debt/settle', methods=['POST'])
+@login_required
+def settle_debt():
+    try:
+        data = request.json
+        debt_id = int(data['creditId'])  # Convert creditId to integer
+        amount_to_pay = data['amountToPay']  # Convert amountToPay to float
+        date_paid_str = data['datePaid']
+        date_paid = datetime.strptime(date_paid_str, '%Y-%m-%d').date()  # Convert datePaid to a Python date
+
+        debt = Debt.query.filter_by(id=debt_id, user_id=current_user.id).first()
+
+        print('debt to settle..............', debt)
+
+        if not debt:
+            return jsonify({"error": "debt not found or unauthorized"}), 403
+
+        if debt.is_paid:
+            return jsonify({"error": "Credit is already paid"}), 400
+
+        payment = CreditorPayment(debt_id=debt_id, amount=amount_to_pay, date=date_paid)
+        db.session.add(payment)
+
+        print('payment..............', payment)
+
+        debt.amount_payed += Decimal(amount_to_pay)
+
+        print('amount paid..............', debt.amount_payed)
+
+        if debt.amount_payed >= debt.amount:
+            credit.is_paid = True
+
+        # Create a CashOut transaction
+        cash_out = CashOut(
+            user_id=current_user.id,
+            expense_id=1,  # Assuming expense id is 1
+            amount=amount_to_pay,
+            date=date_paid,
+            description="settling {}'s debt".format(debt.creditor),  # Assuming an empty description
+            settled_debt_id=debt.id  # Link the CashIn to the settled credit
+        )
+        print('cashout..............', cash_out)
+
+        db.session.add(cash_out)
+
+        db.session.commit()
+
+        print('cashout..............', cash_out)
+
+        progress = round((debt.amount_payed / debt.amount) * 100, 2)  # Round progress to 2 decimal places
+
+        return jsonify({
+            "amountPaid": "{:,.2f}/=".format(debt.amount_payed),
+            "progress": "{}%".format(progress),
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+ 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
