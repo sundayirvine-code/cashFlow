@@ -18,9 +18,22 @@
 
     <div id="analyticSideBar">
         <div id="analytics">
-    
+            <div id="totalpaid">
+                <div style="width: 100%;">
+                    <p style="margin: 0; font-size: 15px;">Total paid</p>
+                    <div style="color: #bfd220;" id="paidamt">{{ total_amount_paid }}</div>
+                </div>
+            </div>
+
+            <div id="totalowed">
+                <div style="width: 100%;">
+                    <p style="margin: 0; font-size: 15px;">Total owed</p>
+                    <div style="color: #f5599a;" id="owedamt">{{ total_amount_owed }}</div>
+                </div>
+            </div>
+
         </div>
-        <div id="chart">
+        <div id="chart" data-totalpaidamount="{{ total_amount_paid }}" data-totalowedamount="{{ total_amount_owed }}">
     
         </div>
     </div>
@@ -163,4 +176,6 @@
 </div>
 
 <script src="/static/script/credit.js"></script>
+<script src="/static/script/creditchart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}

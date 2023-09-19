@@ -1539,8 +1539,21 @@ def credit():
             return jsonify({'error': error_message}), 400  # Return 400 status code for bad request
     # Fetch all rows in the Credit model for the current user, ordered by date_taken
     credits = Credit.query.filter_by(user_id=current_user.id).order_by(Credit.date_taken.desc()).all()
+    total_amount_paid = db.session.query(func.sum(Credit.amount_paid)).filter(
+        Credit.user_id == current_user.id,
+    ).scalar()
+
+    total_amount_owed = db.session.query(func.sum(Credit.amount)).filter(
+        Credit.user_id == current_user.id,
+    ).scalar()
+
+    if total_amount_paid is None:
+        total_amount_paid = 0 
     
-    return render_template('credit.html', credits=credits)
+    return render_template('credit.html', 
+                           credits=credits,
+                           total_amount_owed=total_amount_owed,
+                           total_amount_paid=total_amount_paid)
 
 @app.route('/credit/settle', methods=['POST'])
 @login_required
