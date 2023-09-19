@@ -10,16 +10,29 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import func
 from titlecase import titlecase
 from decimal import Decimal
+import os
+from dotenv import load_dotenv
+import pymysql
+from flask_migrate import Migrate
+
+# Load environment variables from .env file
+load_dotenv()
+
+pymysql.install_as_MySQLdb()
+
 
 # Configuration
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'dd2870b0e1e26c313a1944254e35f4f650bbdf6be96b1422d5abf6d26edef933'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+migrate = Migrate(app, db, render_as_batch=True)
 
 @login_manager.user_loader
 def load_user(user_id):
