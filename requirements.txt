@@ -21,6 +21,7 @@ pytz==2023.3.post1
 six==1.16.0
 SQLAlchemy==2.0.20
 tenacity==8.2.3
+titlecase==2.4
 typing_extensions==4.7.1
 tzdata==2023.3
 Werkzeug==2.3.7
