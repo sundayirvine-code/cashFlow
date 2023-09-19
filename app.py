@@ -307,9 +307,8 @@ def income():
 
     # Query Income categories for the current user and Populate the incomeCategory field
     income_categories = Income.query.filter_by(user_id=current_user.id).all()
-    income_categories.insert(0, Income(id=1, user_id=0, name='Debt'))
     transaction_form.incomeCategory.choices = [(ic.id, ic.name) for ic in income_categories]
-    transaction_form.debtor.choices = [(debtor, debtor) for debtor in unique_debtors]
+
 
     # Calculates total income including debt
     income_totals = calculate_income_totals_formatted_debt(current_user.id)
@@ -445,8 +444,8 @@ def create_income_transaction():
             if not credit:
                 return jsonify({"error": "Credit not found or unauthorized"}), 403
 
-            if credit.is_paid:
-                return jsonify({"error": "Credit is already paid"}), 400
+            '''if credit.is_paid:
+                return jsonify({"error": "Credit is already paid"}), 400'''
 
             payment = DebtorPayment(credit_id=credit.id, amount=amount, date=date_obj)
             print('Payment transaction............................', payment)
@@ -477,7 +476,6 @@ def create_income_transaction():
         # Handle validation errors
         return jsonify({'error': str(e)}), 400
 
-    
 
 @app.route('/search_income_transactions', methods=['GET'])
 @login_required
@@ -613,7 +611,6 @@ def expense():
 
         # Query Income categories for the current user
         expense_categories = Expense.query.filter_by(user_id=current_user.id).all()
-        expense_categories.insert(0, Expense(id=1, user_id=0, name='Credit'))
 
         # Query the contribution of each category to the user's total expense
         expense_totals = calculate_expense_totals(current_user.id)
@@ -621,34 +618,6 @@ def expense():
         '''
         Include credit as a category that takes out Income
         '''
-        # Query unique creditor names for the current user
-        creditor_names = (
-            db.session.query(Debt.creditor)
-            .filter_by(user_id=current_user.id)
-            .distinct()
-            .all()
-        )
-
-        # Extract the debtor names from the query result
-        unique_creditors = [debtor[0] for debtor in creditor_names]
-
-        # Calculate the sum of amount_payed to each creditor
-        creditor_totals = {}
-        for creditor_name in unique_creditors:
-            total_amount_payed = (
-                db.session.query(db.func.sum(Debt.amount_payed))
-                .filter_by(user_id=current_user.id, creditor=creditor_name)
-                .scalar()
-            )
-            if total_amount_payed is None:
-                total_amount_payed = 0
-            creditor_totals[creditor_name] = total_amount_payed
-
-        # Calculate the sum of all amount_payed values in the creditor_totals dictionary
-        total_debt_amount = sum(creditor_totals.values())
-
-        # Add the total_credit_amount to the expense_totals dictionary with 'Credit' as the key
-        expense_totals['Credit'] = total_debt_amount
     
 
         # Initialize a dictionary to store formatted amounts and percentages
@@ -1050,13 +1019,13 @@ def edit_expense_transaction():
 
     # Perform the edit operation on the transaction using the CashOut model
     try:
-        transaction.update_transaction(new_description, new_amount, new_date)
+        transaction.update_transaction(new_description, new_amount, new_date, int(expense_id))
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Error editing the transaction.'}), 500
     
-
+    new_category_name = Expense.query.get(transaction.expense_id).name
     # Return the edited transaction details in the response
     edited_transaction = {
         'transaction_id': transaction.id,
@@ -1064,6 +1033,7 @@ def edit_expense_transaction():
         'new_amount': "{:,.2f}/=".format(transaction.amount),
         'new_description': transaction.description,
         'new_category_id': transaction.expense_id,
+        'new_category_name': new_category_name,
     }
 
     return jsonify({'message': 'Expense transaction updated successfully', 'edited_transaction': edited_transaction}), 200

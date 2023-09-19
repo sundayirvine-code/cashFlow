@@ -18,13 +18,15 @@ function displaySuccessMessage(message) {
 }
 
 // Handle edit transaction button click
-let incomeTransactionId = 0;
+let incomeTransactionId;
+let amount;
 document.querySelectorAll('.edit-transaction').forEach(editButton => {
     editButton.addEventListener('click', () => {
         // Extract data attributes from the edit icon
         incomeTransactionId = editButton.getAttribute('data-transaction-id');
         const description = editButton.getAttribute('data-description');
-        const amount = editButton.getAttribute('data-amount');
+        amount = editButton.getAttribute('data-amount');
+        amount = parseFloat(amount.replace(/,|\/=|\s/g, ''))
         const date = editButton.getAttribute('data-date');
         const incomeCategoryId = editButton.getAttribute('data-categoryId');
         const incomeCategoryName = editButton.getAttribute('data-categoryname');
@@ -33,7 +35,7 @@ document.querySelectorAll('.edit-transaction').forEach(editButton => {
 
         // Populate the edit form with data from the row
         document.getElementById('Editdate').value = date;
-        document.getElementById('Editamount').value = parseFloat(amount.replace(/,|\/=|\s/g, ''));
+        document.getElementById('Editamount').value = amount;
         document.getElementById('Editdescription').value = description;
 
         // Preselect the category based on category ID
@@ -61,6 +63,7 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
     // Collect data from the edit form
     const newIncomeDate = document.getElementById('Editdate').value;
     const newIncomeAmount = parseFloat(document.getElementById('Editamount').value);
+    const amtDiff = newIncomeAmount - amount;
     const newIncomeDescription = document.getElementById('Editdescription').value;
     const newIncomeCategoryId = document.getElementById('editIncomeCategory').value;
 
@@ -98,6 +101,7 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
         new_amount: newIncomeAmount,
         new_description: newIncomeDescription,
         new_category_id: newIncomeCategoryId,
+        amtDiff: amtDiff
     };
 
     // Send a POST request to the edit route for Income transactions

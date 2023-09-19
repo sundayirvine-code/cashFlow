@@ -176,11 +176,6 @@
             {{ transaction_form.incomeCategory(class="form-select") }}    
         </div>
 
-        <div class="col-md-6">  
-            {{ transaction_form.debtor.label }}       
-            {{ transaction_form.debtor(class="form-select") }}                   
-        </div>
-
         <div class="col-md-6">
             {{ transaction_form.amount.label }}           
             {{ transaction_form.amount(class="form-control", placeholder="Enter Amount", type="number", min="0") }}           
@@ -191,7 +186,7 @@
             {{ transaction_form.date(class="form-control", placeholder="Select Date") }}                   
         </div>        
 
-        <div class="col-md-12">
+        <div class="col-md-6">
             {{ transaction_form.description.label }}
             {{ transaction_form.description(class="form-control", placeholder="Optional Description Here", maxlength="100") }}               
         </div>

@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 // Clear form fields
                 categoryNameInput.value = "";
-                //incomeTypeInput.value = "";
+                incomeTypeInput.value = "";
 
                 // Update #categoryCards div by appending a new .catCard div
                 // Create a new card element
@@ -198,7 +198,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const incomeCategorySelect = document.getElementById('incomeCategory')
         const amountInput = document.getElementById('amount');
         const dateInput = document.getElementById('date');
-        const debtorSelect =  document.getElementById('debtor');
         const descriptionInput =  document.getElementById('description');
 
         const transactionFormError = document.getElementById('transactionFormError');
@@ -206,7 +205,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const incomeCategory = incomeCategorySelect.value;
         const amount = amountInput.value.trim();
         const date = dateInput.value.trim();
-        let debtor = debtorSelect.value;
         const description = descriptionInput.value.trim();
 
         // Validate required fields: incomeCategory, amount, and date
@@ -228,17 +226,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Validate debtor field if 'Debt' is selected
-        if (incomeCategory === '1' && !debtor) {
-            transactionFormError.textContent = 'Debtor is required for "Debt" transactions. Debtors will be created in the Credit tab when you lend out money';
-            transactionFormError.style.color = "#212529";
-            transactionFormError.style.display = "block";
-            return;
-        }
-
-        if (debtor && incomeCategory !== '1') {
-            debtor = ''
-        }
 
         // Validate description length
         if (description.length > 100) {
@@ -257,7 +244,6 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append('incomeCategory', incomeCategory);
         formData.append('amount', amount);
         formData.append('date', date);
-        formData.append('debtor', debtor);
         formData.append('description', description);
 
         // Create options object for fetch request

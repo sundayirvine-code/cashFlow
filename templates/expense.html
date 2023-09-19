@@ -133,16 +133,27 @@
         <div class="col-md-6">
             <label for="Editdate">Date</label>
             <input class="form-control" id="Editdate" name="Editdate" placeholder="Edit transaction Date" required type="date">                   
-        </div>        
+        </div>
+
         <div class="col-md-6">
             <label for="Editamount">Edit Amount</label>           
             <input class="form-control" id="Editamount" name="Editamount" placeholder="Enter Amount" required type="number" min="0">           
         </div>
 
-        <div class="col-md-12">
+        <div class="col-md-6 ">      
+            <label for="editExpenseCategory">Choose Category</label>          
+            <select class="form-select" id="editExpenseCategory" name="editExpenseCategory">
+                {% for ec in expense_categories %} 
+                <option value="{{ec.id}}">{{ec.name}}</option>
+                {% endfor %}
+            </select>          
+        </div>
+
+        <div class="col-md-6">
             <label for="Editdescription">Description (optional)</label>
             <textarea class="form-control" id="Editdescription" name="Editdescription" placeholder="Edit Description Here" maxlength="100"></textarea>               
         </div>
+
         <div style="display: flex; justify-content: space-evenly;">
             <button id="cancelEditTransaction" class="btn btn-danger col-md-3">Cancel</button>
             <button  id="submitEditTransactionForm" class="btn btn-primary col-md-3">Submit</button>
@@ -173,11 +184,6 @@
             </select>          
         </div>
 
-        <div class="col-md-6">  
-            <label for="creditor">Creditor (optional)</label>       
-            <select class="form-select" id="Creditor" name="Creditor"></select>                   
-        </div>
-
         <div class="col-md-6">
             <label for="amount">Amount</label>           
             <input class="form-control" id="amount" min="0" name="amount" placeholder="Enter Amount" required="" type="number" value="">           
@@ -188,7 +194,7 @@
             <input class="form-control" id="date" name="date" placeholder="Select Date" required="" type="date" value="">                   
         </div>        
 
-        <div class="col-md-12">
+        <div class="col-md-6">
             <label for="description">Description (optional)</label>
             <textarea class="form-control" id="description" maxlength="100" name="description" placeholder="Optional Description Here"></textarea>               
         </div>

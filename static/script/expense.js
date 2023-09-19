@@ -191,7 +191,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const expenseCategorySelect = document.getElementById('ExpenseCategory')
         const amountInput = document.getElementById('amount');
         const dateInput = document.getElementById('date');
-        const creditorSelect =  document.getElementById('Creditor');
         const descriptionInput =  document.getElementById('description');
 
         const transactionFormError = document.getElementById('transactionFormError');
@@ -199,10 +198,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const expenseCategory = expenseCategorySelect.value;
         const amount = amountInput.value.trim();
         const date = dateInput.value.trim();
-        const creditor = creditorSelect.value;
         const description = descriptionInput.value.trim();
 
-        console.log(expenseCategory, amount, date, creditor, description )
+        console.log(expenseCategory, amount, date, description )
 
         // Validate required fields: incomeCategory, amount, and date
         if (!expenseCategory || !amount || !date) {
@@ -223,13 +221,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Validate debtor field if 'Debt' is selected
-        if (expenseCategory === '1' && !creditor) {
-            transactionFormError.textContent = 'Creditor is required for "Credit" transactions. Creditors will be created in the Debt tab when someone lends you money';
-            transactionFormError.style.color = "#212529";
-            transactionFormError.style.display = "block";
-            return;
-        }
 
         // Validate description length
         if (description.length > 100) {
@@ -248,7 +239,6 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append('expenseCategory', expenseCategory);
         formData.append('amount', amount);
         formData.append('date', date);
-        formData.append('creditor', creditor);
         formData.append('description', description);
 
         console.log(formData.expenseCategory, formData.amount, formData.date, formData.creditor, formData.description )
@@ -310,7 +300,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     //incomeCategorySelect.value = '';
                     amountInput.value = '';
                     dateInput.value = '';
-                    document.getElementById('Creditor').value = '';
                     descriptionInput.value = '';
 
                     // Update the transaction table with the new transaction data

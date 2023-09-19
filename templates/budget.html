@@ -173,19 +173,10 @@
 
 <!-- Form to edit a budgetExpense transaction -->
 <div id="modal-edit" style="display: none;" data-budgetexpense-id="{{current_budget.id}}">
+    <h4 style="margin: 0;">Edit Estimate</h4>
     <div class="row g-3">              
-        <!-- dont allow a user to change the expense midway
-        <div class="col-md-6 ">      
-            <label for="editExpense">Choose Expense</label>          
-            <select class="form-select" id="editExpense" name="Expense">
-                {% for expense in expenses %}
-                <option value="{{expense.id}}">{{expense.name}}</option>
-                {% endfor %}
-            </select>          
-        </div>
-        -->
-        <div class="col-md-6">
-            <label for="Expectedamount">Expected Amount</label>           
+        <div class="col-md-12">
+            <label for="Expectedamount">Estimate Amount</label>           
             <input class="form-control" id="editExpectedamount" name="editExpectedamount" placeholder="Expected Amount" required type="number" min="0">           
         </div>
 
@@ -210,5 +201,5 @@
 <script src="/static/script/budget.js"></script>
 <script src="/static/script/createBudgetExpense.js"></script>
 <script src="/static/script/searchBudgetExpenses.js"></script>
-<script src="/static/script/editDeleteBudgetExpense"></script>
+<script src="/static/script/editDeleteBudgetExpense.js"></script>
 {% endblock %}

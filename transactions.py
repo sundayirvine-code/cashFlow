@@ -174,39 +174,28 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
         end_date = date.today()
 
     income_totals = calculate_income_totals(user_id, start_date, end_date)
-    print('Income totals-----------', income_totals)
+    print('Income totals without debt-----------', income_totals)
 
-    # Query unique debtor names for the current user
-    debtor_names = (
-        db.session.query(Credit.debtor)
-        .filter_by(user_id=user_id)
-        .distinct()
-        .all()
-    )
-
-    # Extract the debtor names from the query result
-    unique_debtors = [debtor[0] for debtor in debtor_names]
     '''
     COME BACK HERE WHEN DEALING WITH DEBT
     '''
-    # Calculate the sum of amount_payed for each debtor
-    debtor_totals = {}
-    for debtor_name in unique_debtors:
-        total_amount_payed = (
-            db.session.query(db.func.sum(Credit.amount_paid))
-            .filter_by(user_id=user_id, debtor=debtor_name)
-            .scalar()
-        )
-        if total_amount_payed is None:
-            total_amount_payed = 0
-        debtor_totals[debtor_name] = total_amount_payed
+    from sqlalchemy import func
 
-    # Calculate the sum of all amount_payed values in the debtor_totals dictionary
-    total_debt_amount = sum(debtor_totals.values())
-    print('Settled credit totals-----------', total_debt_amount)
+    # Sum the amount_paid for the current user's credits settled since the beginning of the month
+    total_amount_paid = db.session.query(func.sum(Credit.amount_paid)).filter(
+        Credit.user_id == user_id,
+        Credit.date_taken >= start_date,
+        Credit.date_taken <= end_date
+    ).scalar()
+
+    if total_amount_paid is None:
+        total_amount_paid = 0 
+        
+
+    print('Settled credit totals-----------', total_amount_paid)
     # Add the total_debt_amount to the income_totals dictionary with 'Credit Settled' as the key
-    income_totals['Debt'] = total_debt_amount
-    print('Income totals-----------', income_totals)
+    income_totals['Debt'] = total_amount_paid
+    print('Income totals with debt-----------', income_totals)
 
     # Calculate the total income
     total_income = sum(income_totals.values())

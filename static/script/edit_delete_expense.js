@@ -18,10 +18,10 @@ function displaySuccessMessage(message) {
   }
 
 // Handle edit transaction button click
-let transactionId = 0;
-let categoryId = 0;
-let categoryName = '';
-let amount = 0;
+let transactionId;
+let categoryId;
+let categoryName;
+let amount;
 document.querySelectorAll('.edit-transaction').forEach(editButton => {
     editButton.addEventListener('click', () => {
         // Extract data attributes from the edit icon
@@ -39,6 +39,14 @@ document.querySelectorAll('.edit-transaction').forEach(editButton => {
         document.getElementById('Editamount').value = parseFloat(amount.replace(/,|\/=|\s/g, ''));
         document.getElementById('Editdescription').value = description;
 
+        // Preselect the category based on category ID
+        const categorySelect = document.getElementById('editExpenseCategory');
+        for (let i = 0; i < categorySelect.options.length; i++) {
+            if (categorySelect.options[i].value === categoryId) {
+                categorySelect.selectedIndex = i;
+                break;
+            }
+        }
 
         // Display the edit form
         document.getElementById('modal-edit').style.display = 'block';
@@ -51,6 +59,7 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
     const newDate = document.getElementById('Editdate').value;
     const newAmount = parseFloat(document.getElementById('Editamount').value); // Parse as a float
     const newDescription = document.getElementById('Editdescription').value;
+    const new_category_id = document.getElementById('editExpenseCategory').value
 
     console.log('Edits:', newDate, newAmount, newDescription);
 
@@ -99,7 +108,7 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
         new_date: newDate,
         new_amount: newAmount,
         new_description: newDescription,
-        expense_id: categoryId,
+        expense_id: new_category_id,
         amount_diff: (newAmount - parseFloat(amount.replace(/,|\/=|\s/g, '')))
     };
 
@@ -125,9 +134,11 @@ document.getElementById('submitEditTransactionForm').addEventListener('click', (
 
                 if (tableRow) {
                     // Update the table row data with the new data
+                    tableRow.querySelector('td:nth-child(2)').textContent = editedTransaction.new_category_name; // Column 2 (Category Name)
                     tableRow.querySelector('td:nth-child(3)').textContent = editedTransaction.new_description;   // Column 3 (Description)
                     tableRow.querySelector('td:nth-child(4)').textContent = editedTransaction.new_date;          // Column 4 (Date)
                     tableRow.querySelector('td:nth-child(5)').textContent = editedTransaction.new_amount;        // Column 5 (Amount)
+                    
 
                     // Update data attributes of edit and delete icons
                     const editIcon = tableRow.querySelector('.edit-transaction');
