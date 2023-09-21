@@ -1,5 +1,4 @@
 from models import db
-from datetime import datetime
 from decimal import Decimal
 
 def add_income(user_id, income_name, income_type_id):
@@ -137,7 +136,7 @@ def calculate_income_totals(user_id, start_date=None, end_date=None):
 
 def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=None):
     """
-    Calculate the total income amounts for each income category of a user within a specified date range.
+    Calculate the total income amounts for each income category including debt taken and settled credit of a user within a specified date range.
 
     Args:
         user_id (int): The user's ID for whom income totals are calculated.
@@ -149,20 +148,10 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
     Returns:
         dict: A dictionary where keys are income category names (str) and values are the corresponding total amounts (float).
 
-    Example:
-        # Calculate income totals for the current user for the current month
-        user_id = current_user.id
-        income_totals = calculate_income_totals(user_id)
-        print(income_totals)
-        
-        # Calculate income totals for the current user for a custom date range
-        start_date = date(2023, 1, 1)
-        end_date = date(2023, 1, 31)
-        income_totals = calculate_income_totals(user_id, start_date, end_date)
-        print(income_totals)
     """
     from datetime import date
     from models import Credit, Debt
+    from sqlalchemy import func
 
     # If start_date is not provided, set it to the beginning of the current month
     if not start_date:
@@ -174,12 +163,6 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
         end_date = date.today()
 
     income_totals = calculate_income_totals(user_id, start_date, end_date)
-    print('Income totals without debt-----------', income_totals)
-
-    '''
-    COME BACK HERE WHEN DEALING WITH DEBT
-    '''
-    from sqlalchemy import func
 
     # Sum the amount_paid for the current user's credits settled since the beginning of the month
     total_amount_paid = db.session.query(func.sum(Credit.amount_paid)).filter(
@@ -190,6 +173,8 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
 
     if total_amount_paid is None:
         total_amount_paid = 0 
+    
+    income_totals['Settled Credit'] = total_amount_paid
 
     # Sum the debt taken the beginning of the month
     total_amount_taken = db.session.query(func.sum(Debt.amount)).filter(
@@ -202,10 +187,6 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
         total_amount_taken = 0
         
     income_totals['Credit'] = total_amount_taken 
-    print('Settled credit totals-----------', total_amount_paid)
-    # Add the total_debt_amount to the income_totals dictionary with 'Credit Settled' as the key
-    income_totals['Settled Credit'] = total_amount_paid
-    print('Income totals with debt-----------', income_totals)
 
     # Calculate the total income
     total_income = sum(income_totals.values())
@@ -306,7 +287,7 @@ def create_budget(user_id, year, month):
 
     existing_budget = Budget.query.filter_by(user_id=user_id, year=year, month=month).first()
     if existing_budget:
-        return "A budget already exists for this month."
+        return "A budget already exists for this year and month."
 
     budget = Budget(user_id=user_id, year=year, month=month)
 
@@ -318,85 +299,6 @@ def create_budget(user_id, year, month):
         db.session.rollback()
         return str(e)
 
-def add_budget_expense(budget_id, expense_id, expected_amount):
-    """
-    Add an expense to a budget with the expected amount.
-
-    Args:
-        budget_id (int): The ID of the budget.
-        expense_id (int): The ID of the associated expense.
-        expected_amount (float): The expected amount to be spent on the expense.
-
-    Returns:
-        BudgetExpense or str: The created BudgetExpense instance if successful, or an error message if unsuccessful.
-    """
-    from models import BudgetExpense
-
-    existing_budget_expense = BudgetExpense.query.filter_by(budget_id=budget_id, expense_id=expense_id).first()
-    if existing_budget_expense:
-        return "An expense with the same ID already exists in this budget."
-    
-    budget_expense = BudgetExpense(budget_id=budget_id, expense_id=expense_id, expected_amount=expected_amount)
-
-    try:
-        db.session.add(budget_expense)
-        db.session.commit()
-        return budget_expense
-    except Exception as e:
-        db.session.rollback()
-        return str(e)
-
-def update_budget_expense_with_cashout(cashout_id):
-    """
-    Update BudgetExpense with the amount of a CashOut transaction.
-
-    Args:
-        cashout_id (int): The ID of the CashOut transaction to be processed.
-    Returns:
-        float or str: The new spent_amount of the BudgetExpense if successful, or an error message if unsuccessful.
-    """
-    from models import CashOut, Expense, Budget, BudgetExpense
-
-    cashout = db.session.get(CashOut, cashout_id)
-
-    if not cashout:
-        return "CashOut transaction not found."
-
-    # Get the associated expense
-    expense = db.session.get(Expense, cashout.expense_id)
-
-    if not expense:
-        return "Associated expense not found."
-
-    '''# Get the current month's budget for the user
-    today = datetime.today()
-    current_year = today.year
-    current_month = today.month'''
-
-    
-    
-    # Get the current month's budget for the user
-    budget = Budget.query.filter_by(user_id=cashout.user_id, year=cashout.date.year, month=cashout.date.month).first()
-
-    print('testing budget found', budget)
-    if not budget:
-        return "No Budget exists for that transaction."
-
-    # Check if the associated expense is part of the budget
-    budget_expense = BudgetExpense.query.filter_by(budget_id=budget.id, expense_id=expense.id).first()
-
-    if not budget_expense:
-        return "Associated expense is not part of the budget"
-
-    # Update the spent_amount of the BudgetExpense
-    budget_expense.update_spent_amount(cashout.amount) 
-
-    try:
-        db.session.commit()
-        return budget_expense.spent_amount
-    except Exception as e:
-        db.session.rollback()
-        return str(e)
 
 def create_debt(user_id, creditor, amount, date, description=None, date_due=None):
     """

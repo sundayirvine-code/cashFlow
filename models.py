@@ -258,9 +258,6 @@ class Debt(db.Model):
 
     cash_out_transactions = db.relationship('CashOut', back_populates='settled_debt', cascade='all')
 
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'creditor', name='_user_creditor_uc'),
-    )
 
 
     def __repr__(self):

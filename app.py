@@ -3,7 +3,7 @@ from auth import register_user, authenticate_user
 from forms import RegistrationForm, LoginForm, IncomeCategoryForm, IncomeTransactionForm
 from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut, Budget, BudgetExpense, DebtorPayment, CreditorPayment
 from flask_login import login_required, logout_user, LoginManager, login_user, current_user
-from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction, calculate_income_totals_formatted_debt
+from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction, calculate_income_totals_formatted_debt, create_budget
 from datetime import date, datetime
 from calculations import calculate_total_income_between_dates, calculate_total_expenses_between_dates, calculate_expense_percentage_of_income
 from dateutil.relativedelta import relativedelta
@@ -1155,14 +1155,10 @@ def budget():
     current_year = datetime.now().year
     current_month = datetime.now().month
 
-    #print(current_year, current_month)
-
     # Handle POST request to create a budget
     if request.method == 'POST':
         # Create a new budget for the current month and year
-        new_budget = Budget(user_id=user_id, year=current_year, month=current_month)
-        db.session.add(new_budget)
-        db.session.commit()
+        new_budget = create_budget(user_id, current_year, current_month)
 
         # Return the newly created budget object in JSON format
         return jsonify({
@@ -1179,12 +1175,10 @@ def budget():
     # Query for all budgets created by the user
     budgets = Budget.query.filter_by(user_id=user_id).all()
 
-    #print('Dates ------------',current_year, current_month)
     current_budget = None
 
     budget_with_totals = []
 
-    #print('budgets ------------',budgets)
     # Calculate total expected and actual amounts for each budget
     for budget in budgets:
         # Query for budget expenses associated with the current budget
