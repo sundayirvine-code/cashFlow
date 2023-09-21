@@ -353,9 +353,16 @@ def initialize_default_income_types():
             income_type = IncomeType(**income_type_data)
             db.session.add(income_type)
 
-    user=User(first_name='default', last_name='default', password='default', email='default@gmail.com')
-    db.session.add(user)
-    db.session.commit()
+    # Check if a user with the email address already exists
+    existing_user = User.query.filter_by(email='default@gmail.com').first()
+
+    if existing_user:
+        pass
+    else:
+        # Create a new user with the unique email address
+        user = User(first_name='default', last_name='default', password='default', email='default@gmail.com')
+        db.session.add(user)
+        db.session.commit()
 
     # Create "Credit" expense category
     expense1 = Expense(user_id=user.id, name='Credit')
