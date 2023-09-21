@@ -357,12 +357,18 @@ def initialize_default_income_types():
     from transactions import add_expense, add_income
 
     # Create "Credit" expense category
-    add_expense(0, 'Credit')
-    add_expense(0, 'Settled Debt')
+    expense1 = Expense(user_id=0, name='Credit')
+    expense2 = Expense(user_id=0, name='Settled Debt')
+    #add_expense(0, 'Credit')
+    #add_expense(0, 'Settled Debt')
 
     # Create "Debt" Income category
-    add_income(0, 'Debt', 3)
-    add_income(0, 'Settlled Credit', 3)
+    debt=Income(user_id=0, name='Debt', income_type_id=3)
+    settled_credit=Income(user_id=0, name='Settlled Credit', income_type_id=3)
+    db.session.add(debt, settled_credit, expense1, expense2)
+    
+    #add_income(0, 'Debt', 3)
+    #add_income(0, 'Settlled Credit', 3)
 
     db.session.commit()
 
