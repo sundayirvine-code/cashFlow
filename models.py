@@ -355,6 +355,7 @@ def initialize_default_income_types():
 
     user=User(first_name='default', last_name='default', password='default', email='default@gmail.com')
     db.session.add(user)
+    db.session.commit()
 
     # Create "Credit" expense category
     expense1 = Expense(user_id=user.id, name='Credit')
