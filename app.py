@@ -175,7 +175,7 @@ def chart_data():
   
     # Calculate the total income
     total_income = sum(income_totals.values())
-    print(total_income)
+    #print(total_income)
 
     # Initialize lists to store labels, values, and colors for the income chart
     income_labels = []
@@ -436,7 +436,7 @@ def create_income_transaction():
         if not credit_to_settle and income_category == 1:
             raise ValueError("No outstanding credit found for the specified debtor.")
 
-        print('', credit_to_settle)
+        #print('', credit_to_settle)
         # Call the add_cash_in_transaction function with the settled_credit_id
         cash_in = add_cash_in_transaction(
             user_id=user_id,
@@ -447,12 +447,12 @@ def create_income_transaction():
             settled_credit_id=credit_to_settle.id if credit_to_settle else None
         )
 
-        print('Cash in transaction............................', cash_in)
+        #print('Cash in transaction............................', cash_in)
 
         if credit_to_settle:
             credit = Credit.query.filter_by(id=credit_to_settle.id, user_id=current_user.id).first()
 
-            print('The credit we will update', credit)
+            #print('The credit we will update', credit)
 
             if not credit:
                 return jsonify({"error": "Credit not found or unauthorized"}), 403
@@ -461,7 +461,7 @@ def create_income_transaction():
                 return jsonify({"error": "Credit is already paid"}), 400'''
 
             payment = DebtorPayment(credit_id=credit.id, amount=amount, date=date_obj)
-            print('Payment transaction............................', payment)
+            #print('Payment transaction............................', payment)
             db.session.add(payment)
 
             credit.amount_paid += Decimal(amount)
@@ -472,7 +472,7 @@ def create_income_transaction():
             db.session.commit()
 
         income_category_name = Income.query.get(income_category).name
-        print('Cash in transaction............................', cash_in)
+        #print('Cash in transaction............................', cash_in)
         # Construct the JSON response with all required information
         response_data = {
             'message': 'Income transaction created successfully',
@@ -666,7 +666,7 @@ def expense():
         # Replace the original income_totals dictionary with the formatted one
         expense_totals = formatted_expense_totals
 
-        print(expense_totals)
+        #print(expense_totals)
 
         # Call the calculate_total_income_between_dates function
         total_expenses, individual_expenses = calculate_total_expenses_between_dates(current_user.id)
@@ -690,7 +690,7 @@ def expense():
         from_date_formatted = start_of_month.strftime('%b %d, %Y')
         to_date_formatted = today.strftime('%b %d, %Y')
 
-        print(expense_transactions)
+        #print(expense_transactions)
         # Load the expense trmplate
         return render_template('expense.html', 
                                expense_categories = expense_categories,
@@ -707,14 +707,14 @@ def expense():
         try:
             # Handle AJAX POST request to retrieve transactions by category
             category_name = request.json.get('category_name')
-            print(category_name)
+            #print(category_name)
 
             user_id = current_user.id
 
             # Find the expense category ID for the given category name and current user
             if   category_name == 'Credit':
                 expense_category = Expense.query.filter_by(user_id=0, name=category_name).first()
-                print(expense_category)
+                #print(expense_category)
             else:
                 expense_category = Expense.query.filter_by(user_id=user_id, name=category_name).first()
 
@@ -725,7 +725,7 @@ def expense():
                 else:
                     expense_category_id = expense_category.id
 
-                print(expense_category_id)
+                #print(expense_category_id)
 
                 # Query CashOut transactions for the specified expense category ID and user ID
                 transactions = CashOut.query.filter_by(expense_id=expense_category_id, user_id=user_id).all()
@@ -790,7 +790,7 @@ def create_expense_transaction():
     creditor = request.form.get('creditor')
     description = request.form.get('description')
 
-    print(expense_category, amount, date, creditor, description)
+    #print(expense_category, amount, date, creditor, description)
 
     # Convert income_category and amount to appropriate data types (e.g., int, float)
     try:
@@ -819,28 +819,28 @@ def create_expense_transaction():
         current_month = get_month_name(datetime.now().month)
         current_year = datetime.now().year
         current_budget = Budget.query.filter_by(user_id=user_id, month=current_month, year=current_year).first()
-        print('current affected budget', current_budget)
+        #print('current affected budget', current_budget)
 
         if current_budget:
             # Check if the expense is listed in the current month's BudgetExpense
             budget_expense = BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first()
 
-            print('buget expense to update:....................',budget_expense)
+            #print('buget expense to update:....................',budget_expense)
 
             if budget_expense:
                 try:
-                    print('before updation.................',budget_expense.spent_amount, amount)
+                    #print('before updation.................',budget_expense.spent_amount, amount)
                     # Update the spent amount in the BudgetExpense model
                     amount = int(amount) if amount else 0.0
                     budget_expense.update_spent_amount(amount)
                     db.session.commit()
                     
-                    print('after updation...................',budget_expense.spent_amount)
+                    #print('after updation...................',budget_expense.spent_amount)
                     
-                    print(BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first().spent_amount)
+                    #print(BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first().spent_amount)
                 except Exception as e:
                     # Handle the exception (e.g., log the error)
-                    print('Error adding amount')
+                    #print('Error adding amount')
                     db.session.rollback()  
 
         # Call the add_cash_out_transaction function with the settled_credit_id
@@ -949,9 +949,9 @@ def search_expense_transactions():
         expense_totals = formatted_expense_totals
 
 
-        print(total_expense)
-        print(individual_expenses)
-        print(expense_totals)
+        #print(total_expense)
+        #print(individual_expenses)
+        #print(expense_totals)
         response_data = {
             'total_expense': str(total_expense),
             'individual_expenses': individual_expenses,
@@ -977,7 +977,7 @@ def edit_expense_transaction():
     expense_id = data.get('expense_id')
     amount_diff = data.get('amount_diff')
 
-    print(transaction_id, new_description, new_date_str, new_amount, expense_id, amount_diff)
+    #print(transaction_id, new_description, new_date_str, new_amount, expense_id, amount_diff)
 
     # Perform validation checks
 
@@ -1011,7 +1011,7 @@ def edit_expense_transaction():
     # Extract month and year from the new date
     new_month = get_month_name(new_date.month)
     new_year = new_date.year
-    print('Budget dates', new_month, new_year)
+    #print('Budget dates', new_month, new_year)
     # Find the current user's budget for the same month and year, if it exists
     budget = Budget.query.filter_by(
         user_id=current_user.id,
@@ -1019,16 +1019,16 @@ def edit_expense_transaction():
         year=new_year
     ).first()
 
-    print('Budget to update', budget)
+    #print('Budget to update', budget)
     if budget:
         # Find the BudgetExpense entry with the same budget and expense_id
         budget_expense = BudgetExpense.query.filter_by(
             budget_id=budget.id,
             expense_id=expense_id
         ).first()
-        print('Budget Expense to update', budget_expense )
+        #print('Budget Expense to update', budget_expense )
         if budget_expense:
-            print(amount_diff)
+            #print(amount_diff)
             try:
                 
                 # Update the spent amount in BudgetExpense using the amount_diff
@@ -1042,7 +1042,7 @@ def edit_expense_transaction():
                 #print('Budget Expense to updated spent amount', budget_expense.spent_amount)
             except Exception as e:
                 db.session.rollback()
-                print('Error updating the spent amount in BudgetExpense')
+                #print('Error updating the spent amount in BudgetExpense')
                 return jsonify({'error': 'Error updating the spent amount in BudgetExpense.'}), 500
 
     # Perform the edit operation on the transaction using the CashOut model
@@ -1141,7 +1141,7 @@ def budget():
     current_year = datetime.now().year
     current_month = datetime.now().month
 
-    print(current_year, current_month)
+    #print(current_year, current_month)
 
     # Handle POST request to create a budget
     if request.method == 'POST':
@@ -1165,12 +1165,12 @@ def budget():
     # Query for all budgets created by the user
     budgets = Budget.query.filter_by(user_id=user_id).all()
 
-    print('Dates ------------',current_year, current_month)
+    #print('Dates ------------',current_year, current_month)
     current_budget = None
 
     budget_with_totals = []
 
-    print('budgets ------------',budgets)
+    #print('budgets ------------',budgets)
     # Calculate total expected and actual amounts for each budget
     for budget in budgets:
         # Query for budget expenses associated with the current budget
@@ -1184,7 +1184,7 @@ def budget():
                 if budget.month == get_month_name(current_month):
                     current_budget = budget
 
-        print('current budget ------------',current_budget)
+        #print('current budget ------------',current_budget)
         total_expected_amount = sum(budget_expense.expected_amount for budget_expense in budget_expenses)
         total_actual_amount = sum(budget_expense.spent_amount for budget_expense in budget_expenses)
 
@@ -1234,7 +1234,7 @@ def budget():
                 db.session.commit()
 
             budget_expense=BudgetExpense.query.get(budget_expense.id)
-            print('Upadted budget expense spent amount------------------------------------', budget_expense.spent_amount)
+            #print('Upadted budget expense spent amount------------------------------------', budget_expense.spent_amount)
             budget_expenses_with_names.append({
                 'id': budget_expense.id,
                 'budget_id': budget_expense.budget_id,
@@ -1247,10 +1247,10 @@ def budget():
         current_total_expected_amount += sum(budget_expense.expected_amount for budget_expense in budget_expenses)
         current_total_actual_amount += sum(budget_expense.spent_amount for budget_expense in budget_expenses)  
 
-        print(current_budget, current_budget.month, current_budget.year)
-    print('------------------------------------')
+        #print(current_budget, current_budget.month, current_budget.year)
+    #print('------------------------------------')
 
-    print(budget_expenses_with_names)
+    #print(budget_expenses_with_names)
     return render_template('budget.html', expenses=expenses, 
                            current_budget=current_budget, 
                            budget_expenses=budget_expenses_with_names,
@@ -1338,7 +1338,7 @@ def search_budget_expenses(budget_id):
                 'expense_name': Expense.query.get(expense.expense_id).name  # Get the expense name
             })
 
-        print(budget.year, budget.month)
+        #print(budget.year, budget.month)
         if isinstance(budget.month, int):
             budget.month = get_month_name(budget.month)
         return jsonify({
@@ -1362,28 +1362,28 @@ def search_budget_by_year_month():
     year = data.get('year')
     month = data.get('month')
 
-    print(year, month)
+    #print(year, month)
 
     month = get_month_name(int(month))
 
-    print(year, month)
+    #rint(year, month)
     
     try:
         # Query for the budget with the specified year and month
         budget = Budget.query.filter_by(year=year, month=month, user_id=current_user.id).first()
-        print('budget search by year and month -----------',budget)
+        #print('budget search by year and month -----------',budget)
         if not budget:
             return jsonify({'error': 'Budget not found for the specified year and month'}), 404
 
         # Query for BudgetExpense records associated with the budget ID
         budget_expenses = BudgetExpense.query.filter_by(budget_id=budget.id).all()
 
-        print(budget_expenses )
+        #print(budget_expenses )
         # Calculate the sum of expected and spent amounts
         total_expected_amount = sum(expense.expected_amount for expense in budget_expenses)
         total_spent_amount = sum(expense.spent_amount for expense in budget_expenses)
 
-        print(total_expected_amount, total_spent_amount )
+        #print(total_expected_amount, total_spent_amount )
         expense_count = 0
         # Prepare the data to send back to the client
         budget_expenses_data = []
@@ -1400,9 +1400,9 @@ def search_budget_by_year_month():
                 'expense_name': Expense.query.get(expense.expense_id).name 
             })
 
-            print(budget_expenses_data)
+            #print(budget_expenses_data)
         
-        print('redy to return DAta')
+        #print('redy to return DAta')
 
 
         return jsonify({
@@ -1417,7 +1417,7 @@ def search_budget_by_year_month():
         }), 200
 
     except Exception as e:
-        print('exception', e)
+        #print('exception', e)
         return jsonify({'error': str(e)}), 500
     
 @app.route('/edit_budget_expense', methods=['POST'])
@@ -1430,7 +1430,7 @@ def edit_budget_expense():
         expenseId = data['expenseId']
         edited_expected_amount = data['edited_expected_amount']
 
-        print(budget_expense_id, budget_id, expenseId, edited_expected_amount)
+        #print(budget_expense_id, budget_id, expenseId, edited_expected_amount)
 
         budget_expense = db.session.query(BudgetExpense).filter_by(
             id=budget_expense_id,
@@ -1470,7 +1470,7 @@ def delete_budget_expense():
         data = request.get_json()
         budget_expense_id = data['budget_expense_id']
 
-        print(budget_expense_id)
+        #print(budget_expense_id)
 
         budget_expense = db.session.query(BudgetExpense).filter_by(id=budget_expense_id).first()
 
@@ -1634,7 +1634,7 @@ def debt():
             date_due = data.get('dateDue')
             description = data.get('description')
 
-            print('creditor data............', creditor, amount, date_due, date_taken, description)
+            #print('creditor data............', creditor, amount, date_due, date_taken, description)
             # Trim and convert debtor name to title case
             creditor = titlecase(creditor.strip())
 
@@ -1664,7 +1664,7 @@ def debt():
             db.session.add(new_debt)
             db.session.commit()
 
-            print('New debt created............', creditor, amount, date_due, date_taken, description)
+            #print('New debt created............', creditor, amount, date_due, date_taken, description)
 
             # Return the newly created credit record in JSON format
             response_data = {
@@ -1687,7 +1687,7 @@ def debt():
             return jsonify({'error': error_message}), 400  # Return 400 status code for bad request
     # Fetch all rows in the Credit model for the current user, ordered by date_taken
     debits = Debt.query.filter_by(user_id=current_user.id).order_by(Debt.date_taken.desc()).all()
-    print('all Debt records..............', debits)
+    #print('all Debt records..............', debits)
 
     total_amount_returned = 0
 
@@ -1697,7 +1697,7 @@ def debt():
         total_amount_received += debit.amount
         total_amount_returned += debit.amount_payed
 
-    print(total_amount_returned, total_amount_received)
+    #print(total_amount_returned, total_amount_received)
 
     if total_amount_returned is None:
         total_amount_returned = 0.00 
@@ -1722,7 +1722,7 @@ def settle_debt():
 
         debt = Debt.query.filter_by(id=debt_id, user_id=current_user.id).first()
 
-        print('debt to settle..............', debt)
+        #print('debt to settle..............', debt)
 
         if not debt:
             return jsonify({"error": "debt not found or unauthorized"}), 403
@@ -1733,11 +1733,11 @@ def settle_debt():
         payment = CreditorPayment(debt_id=debt_id, amount=amount_to_pay, date=date_paid)
         db.session.add(payment)
 
-        print('payment..............', payment)
+        #print('payment..............', payment)
 
         debt.amount_payed += Decimal(amount_to_pay)
 
-        print('amount paid..............', debt.amount_payed)
+        #print('amount paid..............', debt.amount_payed)
 
         if debt.amount_payed >= debt.amount:
             credit.is_paid = True
@@ -1751,13 +1751,13 @@ def settle_debt():
             description="settling {}'s debt".format(debt.creditor),  # Assuming an empty description
             settled_debt_id=debt.id  # Link the CashIn to the settled credit
         )
-        print('cashout..............', cash_out)
+        #print('cashout..............', cash_out)
 
         db.session.add(cash_out)
 
         db.session.commit()
 
-        print('cashout..............', cash_out)
+        #print('cashout..............', cash_out)
 
         progress = round((debt.amount_payed / debt.amount) * 100, 2)  # Round progress to 2 decimal places
 
