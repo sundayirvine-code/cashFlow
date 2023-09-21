@@ -1723,6 +1723,6 @@ if __name__ == '__main__':
         db.create_all()
         initialize_default_income_types()
 
-    app.run(debug=True)
+    app.run(debug=True, port=8080)
 
 
