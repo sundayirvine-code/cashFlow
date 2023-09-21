@@ -354,9 +354,9 @@ def initialize_default_income_types():
             db.session.add(income_type)
 
     # Check if a user with the email address already exists
-    existing_user = User.query.filter_by(email='default@gmail.com').first()
+    user = User.query.filter_by(email='default@gmail.com').first()
 
-    if existing_user:
+    if user:
         pass
     else:
         # Create a new user with the unique email address
