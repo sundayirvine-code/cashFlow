@@ -162,7 +162,7 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
         print(income_totals)
     """
     from datetime import date
-    from models import Credit
+    from models import Credit, Debt
 
     # If start_date is not provided, set it to the beginning of the current month
     if not start_date:
@@ -190,11 +190,21 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
 
     if total_amount_paid is None:
         total_amount_paid = 0 
-        
 
+    # Sum the debt taken the beginning of the month
+    total_amount_taken = db.session.query(func.sum(Debt.amount)).filter(
+        Debt.user_id == user_id,
+        Debt.date_taken >= start_date,
+        Debt.date_taken <= end_date
+    ).scalar()
+
+    if total_amount_taken is None:
+        total_amount_taken = 0
+        
+    income_totals['Credit'] = total_amount_taken 
     print('Settled credit totals-----------', total_amount_paid)
     # Add the total_debt_amount to the income_totals dictionary with 'Credit Settled' as the key
-    income_totals['Debt'] = total_amount_paid
+    income_totals['Settled Credit'] = total_amount_paid
     print('Income totals with debt-----------', income_totals)
 
     # Calculate the total income

@@ -321,21 +321,11 @@ def income():
     income_types = IncomeType.query.all()
     category_form.incomeType.choices = [(it.id, it.name) for it in income_types]
 
-    # Query unique debtor names for the current user
-    debtor_names = (
-        db.session.query(Credit.debtor)
-        .filter_by(user_id=user_id)
-        .distinct()
-        .all()
-    )
-
-    # Extract the debtor names from the query result
-    unique_debtors = [debtor[0] for debtor in debtor_names]
 
     # Query Income categories for the current user and Populate the incomeCategory field
     income_categories = Income.query.filter_by(user_id=current_user.id).all()
     transaction_form.incomeCategory.choices = [(ic.id, ic.name) for ic in income_categories]
-
+    #print('Income categories..............', income_categories)
 
     # Calculates total income including debt
     income_totals = calculate_income_totals_formatted_debt(current_user.id)
@@ -659,7 +649,17 @@ def expense():
         if total_amount_paid is None:
             total_amount_paid = 0 
 
-        expense_totals['Credit'] = total_amount_paid
+        total_amount_given = db.session.query(func.sum(Credit.amount)).filter(
+            Credit.user_id == current_user.id,
+            Debt.date_taken >= start_date,
+            Debt.date_taken <= end_date
+        ).scalar()
+
+        if total_amount_given is None:
+            total_amount_given = 0 
+
+        expense_totals['Settled Debt'] = total_amount_paid
+        expense_totals['Credit'] = total_amount_given
     
 
         # Initialize a dictionary to store formatted amounts and percentages
