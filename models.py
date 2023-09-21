@@ -1,5 +1,4 @@
 from flask_sqlalchemy import SQLAlchemy
-from decimal import Decimal
 from flask_login import UserMixin
 
 db = SQLAlchemy()
@@ -310,10 +309,6 @@ class Credit(db.Model):
     amount_paid = db.Column(db.Numeric(10, 2), default=0.0)
 
     cash_in_transactions = db.relationship('CashIn', back_populates='settled_credit', cascade='all')
-
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'debtor', name='_user_debtor_uc'),
-    )  
 
     def __repr__(self):
         return f"<Credit {self.amount} from {self.debtor} on {self.date_taken}>"
