@@ -1660,13 +1660,27 @@ def debt():
                 description=description
             )
 
-            # Add and commit the new credit record to the database
+            # Add and commit the new debt record to the database
             db.session.add(new_debt)
+
+            cash_in = CashIn(
+                user_id=current_user.id,
+                income_id=1,
+                amount=amount,
+                date=date_taken,
+                description=description
+            )
+            # Add and commit the new debt record to the database
+            db.session.add(cash_in)
+            
             db.session.commit()
+
+            print('New debt created............', new_debt)
+            print('New cashIn created............', cash_in)
 
             #print('New debt created............', creditor, amount, date_due, date_taken, description)
 
-            # Return the newly created credit record in JSON format
+            # Return the newly created debt record in JSON format
             response_data = {
                 'id': new_debt.id,
                 'user_id': new_debt.user_id,
