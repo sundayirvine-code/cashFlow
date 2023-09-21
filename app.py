@@ -23,8 +23,8 @@ pymysql.install_as_MySQLdb()
 # Configuration
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -325,8 +325,6 @@ def income():
     income_totals = calculate_income_totals_formatted_debt(current_user.id)
 
     total_income, individual_incomes = calculate_total_income_between_dates(current_user.id)
-
-    '''CONFIRM THE TWO TOTALS ARE THE SAME'''
 
     # Prepare the data in the desired format
     income_transactions = [
@@ -1106,8 +1104,10 @@ def budget():
     user_id = current_user.id
 
     # Get the current year and month
-    current_year = datetime.now().year
-    current_month = datetime.now().month
+    current_year = int(datetime.now().year)
+    current_month = int(datetime.now().month)
+
+    print(current_year, current_month)
 
     # Handle POST request to create a budget
     if request.method == 'POST':
@@ -1129,8 +1129,6 @@ def budget():
     # Query for all budgets created by the user
     budgets = Budget.query.filter_by(user_id=user_id).all()
 
-    current_budget = None
-
     budget_with_totals = []
 
     # Calculate total expected and actual amounts for each budget
@@ -1138,21 +1136,8 @@ def budget():
         # Query for budget expenses associated with the current budget
         budget_expenses = BudgetExpense.query.filter_by(budget_id=budget.id).all()
 
-        if budget.year==current_year:
-            if isinstance(budget.month, int): 
-                if budget.month == current_month:
-                    current_budget = budget
-            else:
-                if budget.month == get_month_name(current_month):
-                    current_budget = budget
-
         total_expected_amount = sum(budget_expense.expected_amount for budget_expense in budget_expenses)
         total_actual_amount = sum(budget_expense.spent_amount for budget_expense in budget_expenses)
-
-        # Convert Budget.month values to their appropriate string representations
-        if isinstance(budget.month, int):
-            budget.month = get_month_name(budget.month)
-
 
         budget_with_totals.append({
             'id': budget.id,
@@ -1163,19 +1148,20 @@ def budget():
             'total_actual_amount': total_actual_amount
         })
 
+    current_budget = Budget.query.filter_by(user_id=user_id, year=current_year, month=current_month).first()
+
     budget_expenses_with_names = []
     current_total_expected_amount = 0
     current_total_actual_amount = 0
     expense_count = 0
+
     # If a current budget exists, query for its expenses and join with expense names
     if current_budget:
-        # Calculate the start and end dates for the current month using relativedelta
+        # Calculate the start and end dates for the current month
         start_date = date(current_year, current_month, 1)
         end_date = date.today()
-        #current_budget.month = get_month_name(current_budget.month)
         budget_expenses = BudgetExpense.query.filter_by(budget_id=current_budget.id).all()
         
-
         # Join budget expenses with expense names
         for budget_expense in budget_expenses:
             expense_count += 1
@@ -1204,8 +1190,23 @@ def budget():
             })
 
         current_total_expected_amount += sum(budget_expense.expected_amount for budget_expense in budget_expenses)
-        current_total_actual_amount += sum(budget_expense.spent_amount for budget_expense in budget_expenses)  
+        current_total_actual_amount += sum(budget_expense.spent_amount for budget_expense in budget_expenses)
 
+    # Define a dictionary to map month numbers to month names
+    months = {
+        1: 'January',
+        2: 'February',
+        3: 'March',
+        4: 'April',
+        5: 'May',
+        6: 'June',
+        7: 'July',
+        8: 'August',
+        9: 'September',
+        10: 'October',
+        11: 'November',
+        12: 'December'
+    }
     return render_template('budget.html', expenses=expenses, 
                            current_budget=current_budget, 
                            budget_expenses=budget_expenses_with_names,
@@ -1213,6 +1214,7 @@ def budget():
                            current_total_expected_amount=current_total_expected_amount,
                            current_total_actual_amount=current_total_actual_amount,
                            expense_count=expense_count,
+                           months=months
                            )
 
 @app.route('/create_budget_expense', methods=['POST'])

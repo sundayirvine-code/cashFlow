@@ -64,7 +64,7 @@
     <!-- Budget Expense transactions will be inserted here -->
     {% for budget in budgets %}
     <div class="budgetcard" data-budget-id="{{ budget.id }}">
-        <h4>{{ budget.year }} {{ (budget.month) }}</h4>        
+        <h4>{{ budget.year }} {{ (months[budget.month]) }}</h4>        
         {% if budget.total_expected_amount %}
         <div style="display: flex; gap: 5px;align-items: center;">
             <p style="font-size: 12px;">Estimate: </p>
@@ -95,7 +95,7 @@
 <main id="currentBudget">
     <div id="banner">
         <div id="bugetname">
-            <h4 id="currentBudgetInfo">{{current_budget.year}}  {{current_budget.month}}</h4>
+            <h4 id="currentBudgetInfo">{{ current_budget.year }} {{ months[current_budget.month] }}</h4>
             <div>
                 <i class="bi bi-dash-lg"></i>
                 <p>Budget Plan</p>
