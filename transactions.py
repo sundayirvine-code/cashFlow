@@ -194,12 +194,13 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
     # Initialize a dictionary to store formatted amounts and percentages
     formatted_income_totals = {}
 
+    
     # Format the amount values and update the income_totals dictionary
     for category, amount in income_totals.items():
         formatted_amount = "{:,.2f}/=".format(amount)
         try:
             percentage = "{:.2f}".format((amount / total_income) * 100)
-        except ZeroDivisionError:
+        except:
             percentage = "{:.2f}".format(0)
         formatted_income_totals[category] = (formatted_amount, percentage)
 

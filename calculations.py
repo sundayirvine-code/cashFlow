@@ -189,7 +189,10 @@ def calculate_expense_percentage_of_income(user_id, start_date=None, end_date=No
     expense_percentages = []
     for expense_sum in expense_sums:
         expense_id, expense_name, total_amount = expense_sum
-        percentage = (total_amount / total_income) * 100 if total_income > 0 else 0
+        try:
+            percentage = (total_amount / total_income) * 100 if total_income > 0 else 0
+        except:
+            percentage = "{:.2f}".format(0)
         expense_percentages.append({
             'expense_id': expense_id,
             'expense_name': expense_name,
