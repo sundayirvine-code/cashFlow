@@ -352,7 +352,7 @@ def initialize_default_income_types():
         if not income_type:
             income_type = IncomeType(**income_type_data)
             db.session.add(income_type)
-    db.session.commit()
+    
 
     from transactions import add_expense, add_income
 
@@ -363,5 +363,7 @@ def initialize_default_income_types():
     # Create "Debt" Income category
     add_income(0, 'Debt', 3)
     add_income(0, 'Settlled Credit', 3)
+
+    db.session.commit()
 
 
