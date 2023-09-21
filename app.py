@@ -1531,6 +1531,17 @@ def credit():
 
             # Add and commit the new credit record to the database
             db.session.add(new_credit)
+
+            cash_out = CashOut(
+                user_id=current_user.id,
+                expense_id=1,
+                amount=amount,
+                date=date_taken,
+                description=description
+            )
+
+            db.session.add(cash_out)
+
             db.session.commit()
 
             # Return the newly created credit record in JSON format
@@ -1670,7 +1681,7 @@ def debt():
                 date=date_taken,
                 description=description
             )
-            # Add and commit the new debt record to the database
+            # Add and commit the new cashin record to the database
             db.session.add(cash_in)
             
             db.session.commit()
