@@ -366,8 +366,9 @@ def initialize_default_income_types():
     #add_expense(0, 'Settled Debt')
 
     # Create "Debt" Income category
-    debt=Income(user_id=user.id, name='Debt', income_type_id=3)
-    settled_credit=Income(user_id=user.id, name='Settlled Credit', income_type_id=3)
+    income_type = IncomeType.query.filter_by(name='Portfolio Income').first()
+    debt=Income(user_id=user.id, name='Debt', income_type_id=income_type.id)
+    settled_credit=Income(user_id=user.id, name='Settlled Credit', income_type_id=income_type.id)
     db.session.add(debt)
     db.session.add(settled_credit)
     
