@@ -161,7 +161,7 @@ def chart_data():
     start_date = date(today.year, today.month, 1)
     end_date = date.today()
 
-    # Sum the amount_paid for the current user's debtors since the beginning of the month
+    # Sum the amount_paid for the money paid back to you
     total_amount_paid = db.session.query(func.sum(Credit.amount_paid)).filter(
         Credit.user_id == current_user.id,
         Credit.date_taken >= start_date,
@@ -170,6 +170,20 @@ def chart_data():
 
     if total_amount_paid is None:
         total_amount_paid = 0
+
+    # Sum the debt taken the beginning of the month
+    total_amount_taken = db.session.query(func.sum(Debt.amount)).filter(
+        Debt.user_id == current_user.id,
+        Debt.date_taken >= start_date,
+        Debt.date_taken <= end_date
+    ).scalar()
+
+    if total_amount_taken is None:
+        total_amount_taken = 0
+
+    print(total_amount_taken)
+    
+    income_totals['Debt Taken'] = total_amount_taken
 
     income_totals['Settled credit'] = total_amount_paid
   
@@ -1610,7 +1624,7 @@ def settle_credit():
         # Create a CashIn transaction
         cash_in = CashIn(
             user_id=current_user.id,
-            income_id=1,  # Assuming income id is 1
+            income_id=2,  # Assuming income id is 1
             amount=amount_to_pay,
             date=date_paid,
             description="settling {}'s credit".format(credit.debtor),  # Assuming an empty description
@@ -1770,7 +1784,7 @@ def settle_debt():
         # Create a CashOut transaction
         cash_out = CashOut(
             user_id=current_user.id,
-            expense_id=1,  # Assuming expense id is 1
+            expense_id=2,  # Assuming expense id is 1
             amount=amount_to_pay,
             date=date_paid,
             description="settling {}'s debt".format(debt.creditor),  # Assuming an empty description

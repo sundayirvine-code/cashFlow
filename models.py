@@ -366,8 +366,10 @@ def initialize_default_income_types():
 
     # Create "Credit" expense category
     add_expense(0, 'Credit')
+    add_expense(0, 'Settled Debt')
 
     # Create "Debt" Income category
     add_income(0, 'Debt', 3)
+    add_income(0, 'Settlled Credit', 3)
 
 
