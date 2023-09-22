@@ -364,24 +364,32 @@ def initialize_default_income_types():
         db.session.add(user)
         db.session.commit()
 
-    # Create "Credit" expense category
-    expense1 = Expense(user_id=user.id, name='Credit')
-    db.session.add(expense1)
-    expense2 = Expense(user_id=user.id, name='Settled Debt')
-    db.session.add(expense2)
-    #add_expense(0, 'Credit')
-    #add_expense(0, 'Settled Debt')
+    # Check if the "Credit" expense category already exists
+    expense1 = Expense.query.filter_by(user_id=user.id, name='Credit').first()
+    if not expense1:
+        expense1 = Expense(user_id=user.id, name='Credit')
+        db.session.add(expense1)
 
-    # Create "Debt" Income category
+    # Check if the "Settled Debt" expense category already exists
+    expense2 = Expense.query.filter_by(user_id=user.id, name='Settled Debt').first()
+    if not expense2:
+        expense2 = Expense(user_id=user.id, name='Settled Debt')
+        db.session.add(expense2)
+
+    # Check if the "Debt" Income category already exists
     income_type = IncomeType.query.filter_by(name='Portfolio Income').first()
-    debt=Income(user_id=user.id, name='Debt', income_type_id=income_type.id)
-    settled_credit=Income(user_id=user.id, name='Settlled Credit', income_type_id=income_type.id)
-    db.session.add(debt)
-    db.session.add(settled_credit)
-    
-    #add_income(0, 'Debt', 3)
-    #add_income(0, 'Settlled Credit', 3)
+    debt = Income.query.filter_by(user_id=user.id, name='Debt').first()
+    if not debt:
+        debt = Income(user_id=user.id, name='Debt', income_type_id=income_type.id)
+        db.session.add(debt)
+
+    # Check if the "Settled Credit" Income category already exists
+    settled_credit = Income.query.filter_by(user_id=user.id, name='Settled Credit').first()
+    if not settled_credit:
+        settled_credit = Income(user_id=user.id, name='Settled Credit', income_type_id=income_type.id)
+        db.session.add(settled_credit)
 
     db.session.commit()
+
 
 
