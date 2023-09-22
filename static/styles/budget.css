@@ -173,6 +173,21 @@ tr:hover{
     }
 }
 
+@media (max-width: 576px) { 
+    #budgetChartSummary{
+        padding-bottom: 5px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+    }
+
+    #budgetChart, #budgetSummary{
+        min-width: 100%;
+        max-width: fit-content;
+        display: inline-block;
+    }
+}
+
 #budgetTable::-webkit-scrollbar{
     width: 5px;
   }
