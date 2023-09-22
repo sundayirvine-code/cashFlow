@@ -73,6 +73,8 @@
 
 #table{
     color: #ffffff;
+    white-space: nowrap;
+    overflow-x: auto;
 }
 
 #successMessage{

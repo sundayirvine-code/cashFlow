@@ -207,6 +207,8 @@ tr:hover{
 
 #table{
     color: #ffffff;
+    white-space: nowrap;
+    overflow-x: auto;
 }
 
 .fa-trash-alt{
