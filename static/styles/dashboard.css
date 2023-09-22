@@ -161,7 +161,7 @@ tr:hover{
 
 /* Style the scrollbar track */
 #incomeExpenseBalanceBox::-webkit-scrollbar, #chartbox::-webkit-scrollbar {
-    height: 5px;
+    height: 3px;
   }
   
   /* Style the scrollbar thumb (the draggable part) */
