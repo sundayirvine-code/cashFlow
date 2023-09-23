@@ -1157,8 +1157,6 @@ def budget():
     current_year = int(datetime.now().year)
     current_month = int(datetime.now().month)
 
-    print(current_year, current_month)
-
     # Handle POST request to create a budget
     if request.method == 'POST':
         # Create a new budget for the current month and year

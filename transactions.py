@@ -84,18 +84,6 @@ def calculate_income_totals(user_id, start_date=None, end_date=None):
 
     Returns:
         dict: A dictionary where keys are income category names (str) and values are the corresponding total amounts (float).
-
-    Example:
-        # Calculate income totals for the current user for the current month
-        user_id = current_user.id
-        income_totals = calculate_income_totals(user_id)
-        print(income_totals)
-        
-        # Calculate income totals for the current user for a custom date range
-        start_date = date(2023, 1, 1)
-        end_date = date(2023, 1, 31)
-        income_totals = calculate_income_totals(user_id, start_date, end_date)
-        print(income_totals)
     """
     from datetime import date
     from models import Income, CashIn
@@ -174,8 +162,6 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
 
     if total_amount_paid is None:
         total_amount_paid = 0 
-
-    print('Settled Credit.............', total_amount_paid)
     
     income_totals['Settled Credit'] = total_amount_paid
 
@@ -188,8 +174,6 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
 
     if total_amount_taken is None:
         total_amount_taken = 0
-
-    print('Debt Taken.............', total_amount_taken)
         
     income_totals['Debt'] = total_amount_taken 
 
@@ -227,18 +211,6 @@ def calculate_expense_totals(user_id, start_date=None, end_date=None):
 
     Returns:
         list: A list of dictionaries, where each dictionary contains 'name', 'amount', and 'percentage' keys.
-
-    Example:
-        # Calculate expense totals for the current user for the current month
-        user_id = current_user.id
-        expense_totals = calculate_expense_totals(user_id)
-        print(expense_totals)
-        
-        # Calculate expense totals for the current user for a custom date range
-        start_date = date(2023, 1, 1)
-        end_date = date(2023, 1, 31)
-        expense_totals = calculate_expense_totals(user_id, start_date, end_date)
-        print(expense_totals)
     """
     from datetime import date
     from models import Expense, CashOut
