@@ -568,7 +568,6 @@ def edit_income_transaction():
     new_description = data.get('new_description')
     new_category_id = data.get('new_category_id')
 
-    # Perform validation checks
     # Check if all required fields are provided
     if not (new_date_str and new_amount and new_category_id):
         return jsonify({'error': 'Please provide all required fields.'}), 400
@@ -1050,10 +1049,8 @@ def edit_expense_transaction():
             try:     
                 # Update the spent amount in BudgetExpense using the amount_diff
                 if amount_diff < 0:
-                    # If amount_diff is negative, subtract it from spent_amount
                     budget_expense.spent_amount -= abs(amount_diff)
                 elif amount_diff > 0:
-                    # If amount_diff is positive, add it to spent_amount
                     budget_expense.update_spent_amount(amount_diff)
                 db.session.commit()
 
@@ -1441,7 +1438,6 @@ def edit_budget_expense():
             ).first()
             edited_expected_amount = "{:,.2f}".format(budget_expense.expected_amount)
 
-            # Return the updated expected amount in the response
             return jsonify({'updated_expected_amount': edited_expected_amount, 
                             'message': 'BudgetExpense edited successfully'}), 200
 
@@ -1576,10 +1572,10 @@ def credit():
 def settle_credit():
     try:
         data = request.json
-        credit_id = int(data['creditId'])  # Convert creditId to integer
-        amount_to_pay = data['amountToPay']  # Convert amountToPay to float
+        credit_id = int(data['creditId'])
+        amount_to_pay = data['amountToPay'] 
         date_paid_str = data['datePaid']
-        date_paid = datetime.strptime(date_paid_str, '%Y-%m-%d').date()  # Convert datePaid to a Python date
+        date_paid = datetime.strptime(date_paid_str, '%Y-%m-%d').date() 
 
         credit = Credit.query.filter_by(id=credit_id, user_id=current_user.id).first()
 
@@ -1600,17 +1596,16 @@ def settle_credit():
         # Create a CashIn transaction
         cash_in = CashIn(
             user_id=current_user.id,
-            income_id=2,  # Assuming income id is 1
+            income_id=2,
             amount=amount_to_pay,
             date=date_paid,
-            description="settling {}'s credit".format(credit.debtor),  # Assuming an empty description
-            settled_credit_id=credit.id  # Link the CashIn to the settled credit
+            description="settling {}'s credit".format(credit.debtor), 
+            settled_credit_id=credit.id
         )
         db.session.add(cash_in)
-
         db.session.commit()
 
-        progress = round((credit.amount_paid / credit.amount) * 100, 2)  # Round progress to 2 decimal places
+        progress = round((credit.amount_paid / credit.amount) * 100, 2) 
 
         return jsonify({
             "amountPaid": "{:,.2f}/=".format(credit.amount_paid),
@@ -1688,7 +1683,7 @@ def debt():
                 'amount_paid': "{:,.2f}/=".format(new_debt.amount_payed)
             }
 
-            return jsonify(response_data), 201  # Return 201 status code for successful creation
+            return jsonify(response_data), 201
 
         except Exception as e:
             # Handle errors and return an error response
@@ -1722,10 +1717,10 @@ def debt():
 def settle_debt():
     try:
         data = request.json
-        debt_id = int(data['creditId'])  # Convert creditId to integer
-        amount_to_pay = data['amountToPay']  # Convert amountToPay to float
+        debt_id = int(data['creditId'])
+        amount_to_pay = data['amountToPay'] 
         date_paid_str = data['datePaid']
-        date_paid = datetime.strptime(date_paid_str, '%Y-%m-%d').date()  # Convert datePaid to a Python date
+        date_paid = datetime.strptime(date_paid_str, '%Y-%m-%d').date()
 
         debt = Debt.query.filter_by(id=debt_id, user_id=current_user.id).first()
 
@@ -1746,17 +1741,17 @@ def settle_debt():
         # Create a CashOut transaction
         cash_out = CashOut(
             user_id=current_user.id,
-            expense_id=2,  # Assuming expense id is 1
+            expense_id=2,
             amount=amount_to_pay,
             date=date_paid,
-            description="settling {}'s debt".format(debt.creditor),  # Assuming an empty description
-            settled_debt_id=debt.id  # Link the CashIn to the settled credit
+            description="settling {}'s debt".format(debt.creditor), 
+            settled_debt_id=debt.id 
         )
 
         db.session.add(cash_out)
         db.session.commit()
 
-        progress = round((debt.amount_payed / debt.amount) * 100, 2)  # Round progress to 2 decimal places
+        progress = round((debt.amount_payed / debt.amount) * 100, 2) 
 
         return jsonify({
             "amountPaid": "{:,.2f}/=".format(debt.amount_payed),
