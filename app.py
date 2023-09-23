@@ -4,7 +4,7 @@ from forms import RegistrationForm, LoginForm, IncomeCategoryForm, IncomeTransac
 from models import db, initialize_default_income_types, User, Income, IncomeType, Credit, CashIn, Expense, Debt, CashOut, Budget, BudgetExpense, DebtorPayment, CreditorPayment
 from flask_login import login_required, logout_user, LoginManager, login_user, current_user
 from transactions import add_income, add_cash_in_transaction, calculate_income_totals, add_expense, calculate_expense_totals, add_cash_out_transaction, calculate_income_totals_formatted_debt, create_budget
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from calculations import calculate_total_income_between_dates, calculate_total_expenses_between_dates, calculate_expense_percentage_of_income
 from sqlalchemy import func
 from titlecase import titlecase
@@ -23,8 +23,8 @@ pymysql.install_as_MySQLdb()
 # Configuration
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -207,9 +207,57 @@ def chart_data():
         income_labels.append(category)
         income_values.append(percentage)
 
+    # Cash Out trend chart
+    today = date.today()
+    start_date = date(today.year, today.month, 1)
+
+    # Calculate the end dates for each week
+    end_date1 = start_date + timedelta(days=6)
+    end_date2 = start_date + timedelta(days=13)
+    end_date3 = start_date + timedelta(days=20)
+    end_date4 = start_date + timedelta(days=27)
+
+    # Calculate the total cash-out for each week
+    total_cash_out1 = db.session.query(func.sum(CashOut.amount)).filter(
+        CashOut.user_id == current_user.id,
+        CashOut.date >= start_date,
+        CashOut.date <= end_date1
+    ).scalar()
+
+    total_cash_out2 = db.session.query(func.sum(CashOut.amount)).filter(
+        CashOut.user_id == current_user.id,
+        CashOut.date >= start_date,
+        CashOut.date <= end_date2
+    ).scalar()
+
+    total_cash_out3 = db.session.query(func.sum(CashOut.amount)).filter(
+        CashOut.user_id == current_user.id,
+        CashOut.date >= start_date,
+        CashOut.date <= end_date3
+    ).scalar()
+
+    total_cash_out4 = db.session.query(func.sum(CashOut.amount)).filter(
+        CashOut.user_id == current_user.id,
+        CashOut.date >= start_date,
+        CashOut.date <= end_date4
+    ).scalar()
+
+    cash_out_labels = [f"Week 1",
+                       f"Week 2",
+                       f"Week 3",
+                       f"Week 4"]
+
+    cash_out_values = [total_cash_out1 or 0, total_cash_out2 or 0, total_cash_out3 or 0, total_cash_out4 or 0]
+
+    cash_out_chart_data = {
+        'labels': cash_out_labels,
+        'values': cash_out_values,
+    }
+
     chart_data = {
         'expense_chart_data': expense_chart_data,
-        'income_chart_data': income_chart_data
+        'income_chart_data': income_chart_data,
+        'cash_out_chart_data': cash_out_chart_data 
     }
 
     return jsonify(chart_data)

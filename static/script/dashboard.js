@@ -18,6 +18,7 @@ async function renderChart() {
         // Get the chart container elements
         const incomechartContainer = document.getElementById('incomeChart');
         const chartContainer = document.getElementById('expenseChart');
+        const trendContainer = document.getElementById('extraChart');
 
         // Create a canvas element to render the chart
         const canvas = document.createElement('canvas');
@@ -26,8 +27,12 @@ async function renderChart() {
         const incomecanvas = document.createElement('canvas');
         incomechartContainer.appendChild(incomecanvas);
 
+        const trendcanvas = document.createElement('canvas');
+        trendContainer.appendChild(trendcanvas);
+
         const ctx = canvas.getContext('2d');
         const incomectx = incomecanvas.getContext('2d');
+        const trendctx = trendcanvas.getContext('2d');
 
         // Create and configure the chart using Chart.js
         const incomechart = new Chart(incomectx, {
@@ -128,6 +133,68 @@ async function renderChart() {
                                 // Format the tooltip label as a percentage with a percent symbol
                                 const value = context.parsed;
                                 return value.toFixed(2) + '%'; // Two decimal places and a percent symbol
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        // Create and configure the chart using Chart.js
+        const trendchart = new Chart(trendctx, {
+            type: 'line',
+            data: {
+                labels: chartData.cash_out_chart_data.labels,
+                datasets: [{
+                    label: '',
+                    data: chartData.cash_out_chart_data.values,
+                    fill: false,
+                    tension: 0.1,
+                    borderColor: 'rgb(75, 192, 192)',  // Set border color for pie chart slices
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,  // Allow chart resizing
+                devicePixelRatio: 2,  // Increase the pixel ratio as needed
+                scales: {
+                    x: {
+                        grid: {
+                            display: true, // Show X-axis grid lines
+                            color: 'rgba(255, 255, 255, 0.3)', // Set the color of X-axis grid lines
+                        },
+                    },
+                    y: {
+                        grid: {
+                            display: true, // Show Y-axis grid lines
+                            color: 'rgba(255, 255, 255, 0.3)', // Set the color of Y-axis grid lines
+                        },
+                    },
+                },
+                plugins: {
+                    legend: {
+                        display: false, // Hide legend
+                    },
+                    title: {
+                        display: true,
+                        text: 'Expense Trend',
+                        position: 'bottom',
+                        align: 'start',
+                        font: {
+                            size: 12, // Set the font size for the title
+                            weight: 'bold', // Set the font weight (optional)
+                        },
+                        padding: {
+                            top: 3,
+                            bottom: 0
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                // Format the tooltip label as a percentage with a percent symbol
+                                const value = context.parsed;
+                                return `${value.toFixed(2)} /=`;
                             },
                         },
                     },
