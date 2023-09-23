@@ -127,6 +127,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 scales: {
                     x: {
                         beginAtZero: true,
+                        grid: {
+                            display: true, // Show X-axis grid lines
+                            color: 'rgba(255, 255, 255, 0.3)', // Set the color of X-axis grid lines
+                        },
+                    },
+                    y: {
+                        grid: {
+                            display: true, // Show Y-axis grid lines
+                            color: 'rgba(255, 255, 255, 0.3)', // Set the color of Y-axis grid lines
+                        },
                     },
                 },
                 plugins: {

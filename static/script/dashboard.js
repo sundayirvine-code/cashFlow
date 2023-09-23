@@ -149,8 +149,8 @@ async function renderChart() {
                     label: '',
                     data: chartData.cash_out_chart_data.values,
                     fill: false,
-                    tension: 0.1,
-                    borderColor: 'rgb(75, 192, 192)',  // Set border color for pie chart slices
+                    tension: 0.5,
+                    borderWidth: 1.5,
                 }],
             },
             options: {
@@ -188,15 +188,6 @@ async function renderChart() {
                             top: 3,
                             bottom: 0
                         }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                // Format the tooltip label as a percentage with a percent symbol
-                                const value = context.parsed;
-                                return `${value.toFixed(2)} /=`;
-                            },
-                        },
                     },
                 },
             },

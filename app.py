@@ -226,19 +226,19 @@ def chart_data():
 
     total_cash_out2 = db.session.query(func.sum(CashOut.amount)).filter(
         CashOut.user_id == current_user.id,
-        CashOut.date >= start_date,
+        CashOut.date >= end_date1 + timedelta(days=1),
         CashOut.date <= end_date2
     ).scalar()
 
     total_cash_out3 = db.session.query(func.sum(CashOut.amount)).filter(
         CashOut.user_id == current_user.id,
-        CashOut.date >= start_date,
+        CashOut.date >= end_date2 + timedelta(days=1),
         CashOut.date <= end_date3
     ).scalar()
 
     total_cash_out4 = db.session.query(func.sum(CashOut.amount)).filter(
         CashOut.user_id == current_user.id,
-        CashOut.date >= start_date,
+        CashOut.date >= end_date3 + timedelta(days=1),
         CashOut.date <= end_date4
     ).scalar()
 
