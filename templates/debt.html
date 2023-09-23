@@ -149,7 +149,7 @@
 <div id="transactionPaymentForm" style="display: none;">
 
     <div class="formheader">
-        <h2>Debt Payment</h2>
+        <h2>Debt Settlement</h2>
         <i class="bi bi-x-lg" id="closePaymentForm"></i>
     </div>
 
@@ -163,13 +163,18 @@
         </div>
 
         <div class="col-md-6">
-            <label for="amountToPay">Amount Paid</label>           
-            <input class="form-control" id="amountToPay" min="0" name="amount" placeholder="Enter Amount" required="" type="number" value="">           
-        </div>
-
-        <div class="col-md-12">
             <label for="datePaid">Date Paid</label>
             <input class="form-control" id="datePaid" name="datepaid" placeholder="Select Date" required="" type="date" value="">                   
+        </div>
+
+        <div class="col-md-6">
+            <label for="amountRem">Remaining amount</label>           
+            <input class="form-control" id="amountRem" min="0" name="amount" placeholder="Enter Amount" required="" type="number" value="" disabled>           
+        </div>
+
+        <div class="col-md-6">
+            <label for="amountToPay">Amount to pay</label>           
+            <input class="form-control" id="amountToPay" min="0" name="amount" placeholder="Enter Amount" required="" type="number" value="">           
         </div>
 
         <button type="submit" id="submitPaymentForm" class="btn btn-primary col-md-3">Submit</button>

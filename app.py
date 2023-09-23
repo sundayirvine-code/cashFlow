@@ -160,15 +160,16 @@ def chart_data():
     start_date = date(today.year, today.month, 1)
     end_date = date.today()
 
-    # Sum the amount_paid for the money paid back to you
-    total_amount_paid = db.session.query(func.sum(Credit.amount_paid)).filter(
-        Credit.user_id == current_user.id,
-        Credit.date_taken >= start_date,
-        Credit.date_taken <= end_date
+    # Sum the amount for the current user's credits settled since the beginning of the month
+    total_amount_paid = db.session.query(func.sum(CashIn.amount)).filter(
+        CashIn.income_id==2,
+        CashIn.user_id == current_user.id,
+        CashIn.date >= start_date,
+        CashIn.date <= end_date
     ).scalar()
 
     if total_amount_paid is None:
-        total_amount_paid = 0
+        total_amount_paid = 0 
 
     # Sum the debt taken the beginning of the month
     total_amount_taken = db.session.query(func.sum(Debt.amount)).filter(
@@ -321,15 +322,14 @@ def income():
 
             # Find the income category ID for the given category name and current user
             if   category_name == 'Debt':
-                income_category = Income.query.filter_by(user_id=0, name=category_name).first()
+                income_category = Income.query.filter_by(user_id=1, name=category_name).first()
+            elif category_name == 'Settled Credit':
+                income_category = Income.query.filter_by(user_id=1, name=category_name).first()
             else:
                 income_category = Income.query.filter_by(user_id=user_id, name=category_name).first()
 
             if income_category:
-                if category_name == 'Debt': # Debt is the first income category for all users
-                    income_category_id = 1
-                else:
-                    income_category_id = income_category.id
+                income_category_id = income_category.id
 
                 # Query CashIn transactions for the specified income category ID and user ID
                 transactions = CashIn.query.filter_by(income_id=income_category_id, user_id=user_id).all()
@@ -664,13 +664,14 @@ def expense():
         expense_totals = calculate_expense_totals(current_user.id)
 
         '''
-        Include credit as a category that takes out Income
+        Include credit and settled debt as categories that take out Income
         '''
         today = date.today()
         start_date = date(today.year, today.month, 1)
 
         end_date = date.today()
 
+        # settled debt amount
         total_amount_paid = db.session.query(func.sum(Debt.amount_payed)).filter(
             Debt.user_id == current_user.id,
             Debt.date_taken >= start_date,
@@ -680,6 +681,7 @@ def expense():
         if total_amount_paid is None:
             total_amount_paid = 0 
 
+        # credit given amount
         total_amount_given = db.session.query(func.sum(Credit.amount)).filter(
             Credit.user_id == current_user.id,
             Debt.date_taken >= start_date,

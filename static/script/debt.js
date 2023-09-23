@@ -165,6 +165,13 @@ document.addEventListener('DOMContentLoaded', function () {
             // Prepopulate the "Debtor" input field with the debtor name from the clicked row
             const debtorName = event.target.getAttribute('data-debtor-name');
             const debtorPaymentInput = document.getElementById('debtorPayment');
+
+            const amtTaken = parseFloat(event.target.getAttribute('data-amount-owed'));
+            const amtPaid = parseFloat(event.target.getAttribute('data-amount-paid'));
+            const rem = amtTaken - amtPaid;
+            const remInput = document.getElementById('amountRem');
+
+            remInput.value = rem;
             debtorPaymentInput.value = debtorName;
             creditId = event.target.getAttribute('data-transaction-id');
 

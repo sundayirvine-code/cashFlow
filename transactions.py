@@ -150,7 +150,7 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
 
     """
     from datetime import date
-    from models import Credit, Debt
+    from models import Credit, Debt, CashIn
     from sqlalchemy import func
 
     # If start_date is not provided, set it to the beginning of the current month
@@ -164,15 +164,18 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
 
     income_totals = calculate_income_totals(user_id, start_date, end_date)
 
-    # Sum the amount_paid for the current user's credits settled since the beginning of the month
-    total_amount_paid = db.session.query(func.sum(Credit.amount_paid)).filter(
-        Credit.user_id == user_id,
-        Credit.date_taken >= start_date,
-        Credit.date_taken <= end_date
+    # Sum the amount for the current user's credits settled since the beginning of the month
+    total_amount_paid = db.session.query(func.sum(CashIn.amount)).filter(
+        CashIn.income_id==2,
+        CashIn.user_id == user_id,
+        CashIn.date >= start_date,
+        CashIn.date <= end_date
     ).scalar()
 
     if total_amount_paid is None:
         total_amount_paid = 0 
+
+    print('Settled Credit.............', total_amount_paid)
     
     income_totals['Settled Credit'] = total_amount_paid
 
@@ -185,8 +188,10 @@ def calculate_income_totals_formatted_debt(user_id, start_date=None, end_date=No
 
     if total_amount_taken is None:
         total_amount_taken = 0
+
+    print('Debt Taken.............', total_amount_taken)
         
-    income_totals['Credit'] = total_amount_taken 
+    income_totals['Debt'] = total_amount_taken 
 
     # Calculate the total income
     total_income = sum(income_totals.values())
