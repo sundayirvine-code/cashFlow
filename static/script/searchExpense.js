@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.transactions.forEach((transaction) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${transaction.id}</td>
+                        <td>CF${transaction.id.toString().padStart(3, '0')}EXP</td>
                         <td>${transaction.category}</td>
                         <td>${transaction.description}</td>
                         <td>${transaction.date}</td>
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const formattedDate = new Date(transaction.date).toISOString().split('T')[0];
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${transaction.id}</td>
+                        <td>CF${transaction.id.toString().padStart(3, '0')}EXP</td>
                         <td>${transaction.name}</td>
                         <td>${transaction.description}</td>
                         <td>${formattedDate}</td>

@@ -93,7 +93,7 @@
                 <!-- Expense transactions will be inserted here -->
                 {% for expense_transaction in expense_transactions %}
                 <tr data-row-id="{{ expense_transaction['transaction_id'] }}">
-                    <td>{{ "CFEXP-{0:03d}".format(expense_transaction['transaction_id']) }}</td> 
+                    <td>{{ "CF{0:03d}EXP".format(expense_transaction['transaction_id']) }}</td> 
                     <td>{{ expense_transaction['expense_category_name'] }}</td>
                     <td>{{ expense_transaction['description'] }}</td>
                     <td>{{ expense_transaction['date'] }}</td>
