@@ -940,6 +940,21 @@ def search_expense_transactions():
 
         # Add the total_credit_amount to the expense_totals dictionary with 'Credit' as the key
         expense_totals['Credit'] = total_amount_given
+
+        '''
+        Include settled debt as a category that contributes to expense
+        '''
+        total_amount_paid = db.session.query(func.sum(CashOut.amount)).filter(
+            CashOut.expense_id==2,
+            CashOut.user_id == user_id,
+            CashOut.date >= start_date,
+            CashOut.date <= end_date
+        ).scalar()
+
+        if total_amount_paid is None:
+            total_amount_paid = 0 
+        
+        expense_totals['Settled Debt'] = total_amount_paid
     
 
         # Initialize a dictionary to store formatted amounts and percentages
