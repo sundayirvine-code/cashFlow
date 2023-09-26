@@ -755,7 +755,9 @@ def expense():
 
             # Find the expense category ID for the given category name and current user
             if   category_name == 'Credit':
-                expense_category = Expense.query.filter_by(user_id=0, name=category_name).first()
+                expense_category = Expense.query.filter_by(user_id=1, name=category_name).first()
+            elif   category_name == 'Settled Debt':
+                expense_category = Expense.query.filter_by(user_id=1, name=category_name).first()
             else:
                 expense_category = Expense.query.filter_by(user_id=user_id, name=category_name).first()
 
@@ -926,34 +928,18 @@ def search_expense_transactions():
         '''
         Include credit as a category that contributes to expense
         '''
-        # Query unique creditor names for the current user
-        creditor_names = (
-            db.session.query(Debt.creditor)
-            .filter_by(user_id=current_user.id)
-            .distinct()
-            .all()
-        )
+        # Sum the credit given in the date period
+        total_amount_given = db.session.query(func.sum(Credit.amount)).filter(
+            Credit.user_id == user_id,
+            Credit.date_taken >= start_date,
+            Credit.date_taken <= end_date
+        ).scalar()
 
-        # Extract the creditor names from the query result
-        unique_creditors = [creditor[0] for creditor in creditor_names]
-
-        # Calculate the sum of amount_payed to each creditor
-        creditor_totals = {}
-        for creditor_name in unique_creditors:
-            total_amount_payed = (
-                db.session.query(db.func.sum(Debt.amount_payed))
-                .filter_by(user_id=current_user.id, creditor=creditor_name)
-                .scalar()
-            )
-            if total_amount_payed is None:
-                total_amount_payed = 0
-            creditor_totals[creditor_name] = total_amount_payed
-
-        # Calculate the sum of all amount_payed values in the creditor_totals dictionary
-        total_credit_amount = sum(creditor_totals.values())
+        if total_amount_given is None:
+            total_amount_given = 0
 
         # Add the total_credit_amount to the expense_totals dictionary with 'Credit' as the key
-        expense_totals['Credit'] = total_credit_amount
+        expense_totals['Credit'] = total_amount_given
     
 
         # Initialize a dictionary to store formatted amounts and percentages
