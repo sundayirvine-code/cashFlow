@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
  
         // Data validation for amount and date fields
         if (datePaid < dateTaken) {
-            alert('Date of credit settlement should be after the date taken.');
+            alert('Date of credit settlement should be after the date given.');
             return;
         }
 

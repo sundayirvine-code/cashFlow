@@ -115,7 +115,7 @@ async function renderChart() {
                     },
                     title: {
                         display: true,
-                        text: 'Expense Breakdown',
+                        text: 'Expense / Income Breakdown',
                         position: 'bottom',
                         align: 'start',
                         font: {

@@ -158,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     let creditId;
+    let dateTaken;
     // Attach a click event to all payment icons in the table rows
     const paymentIcons = document.querySelectorAll('.bi-credit-card-fill');
     paymentIcons.forEach(icon => {
@@ -165,6 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Prepopulate the "Debtor" input field with the debtor name from the clicked row
             const debtorName = event.target.getAttribute('data-debtor-name');
             const debtorPaymentInput = document.getElementById('debtorPayment');
+            dateTaken = event.target.getAttribute('data-date-taken');
 
             const amtTaken = parseFloat(event.target.getAttribute('data-amount-owed'));
             const amtPaid = parseFloat(event.target.getAttribute('data-amount-paid'));
@@ -200,6 +202,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const datePaid = document.getElementById('datePaid').value;
 
         // Data validation for amount and date fields
+        if (datePaid < dateTaken) {
+            alert('Date of debt settlement should be after the date taken.');
+            return;
+        }
+
         if (isNaN(amountToPay) || amountToPay <= 0) {
             alert('Amount should be a positive number.');
             return;
