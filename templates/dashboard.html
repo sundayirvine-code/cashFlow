@@ -132,9 +132,9 @@
                                 <tr>
                                     <td>
                                         {% if transaction.type == 'Income' %}
-                                            {{ "CFINC-{0:03d}".format(transaction["id"]) }}
+                                            {{ "CF{0:03d}INC".format(transaction["id"]) }}
                                         {% else %}
-                                            {{ "CFEXP-{0:03d}".format(transaction["id"]) }}
+                                            {{ "CF{0:03d}EXP".format(transaction["id"]) }}
                                         {% endif %}
                                     </td>
                                     <td>{{ transaction.name }}</td>

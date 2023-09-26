@@ -92,7 +92,7 @@
               <!-- Income transactions will be inserted here -->
               {% for income_transaction in income_transactions %}
                 <tr data-row-id="{{ income_transaction['transaction_id'] }}">
-                    <td>{{ "CFINC-{0:03d}".format(income_transaction['transaction_id']) }}</td> 
+                    <td>{{ "CF{0:03d}INC".format(income_transaction['transaction_id']) }}</td> 
                     <td>{{ income_transaction['income_category_name'] }}</td>
                     <td>{{ income_transaction['description'] }}</td>
                     <td>{{ income_transaction['date'] }}</td>

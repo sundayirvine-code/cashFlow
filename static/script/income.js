@@ -316,7 +316,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     // Create cells for each data point
                     const transactionIdCell = document.createElement('td');
-                    transactionIdCell.textContent = transaction_id;
+                    transactionIdCell.textContent = 'CF'+transaction_id.toString().padStart(3, '0')+'INC';
 
                     const incomeCategoryCell = document.createElement('td');
                     incomeCategoryCell.textContent = income_category_name;
