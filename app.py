@@ -23,8 +23,8 @@ pymysql.install_as_MySQLdb()
 # Configuration
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -848,28 +848,25 @@ def create_expense_transaction():
     try:
         user_id = current_user.id
 
-        # Query the Debt model to find the appropriate debt using creditor and user_id
-        debt_to_settle = Debt.query.filter_by(creditor=creditor, user_id=user_id, is_paid=False).first()
-
-        if not debt_to_settle and expense_category == 1:
-            raise ValueError("No outstanding credit found for the specified debtor.")
-
         # Check if the budget for the current month and year exists
-        current_month = get_month_name(datetime.now().month)
+        current_month = datetime.now().month
         current_year = datetime.now().year
+ 
         current_budget = Budget.query.filter_by(user_id=user_id, month=current_month, year=current_year).first()
 
         if current_budget:
             # Check if the expense is listed in the current month's BudgetExpense
             budget_expense = BudgetExpense.query.filter_by(budget_id=current_budget.id, expense_id=expense_category).first()
-
             if budget_expense:
+                print('Budget Expense before transaction', budget_expense.spent_amount)
                 try:
                     amount = int(amount) if amount else 0.0
                     budget_expense.update_spent_amount(amount)
                     db.session.commit()
+                    print('Budget Expense after transaction', budget_expense.spent_amount)
                 except Exception as e:
-                    db.session.rollback()  
+                    print('Budget Expense not updated')
+                    db.session.rollback() 
 
         # Call the add_cash_out_transaction function with the settled_credit_id
         cash_out = add_cash_out_transaction(
@@ -878,7 +875,6 @@ def create_expense_transaction():
             date=date_obj,
             expense_id=expense_category,
             description=description,
-            settled_debt_id=debt_to_settle.id if debt_to_settle else None
         )
 
         expense_category_name = Expense.query.get(expense_category).name

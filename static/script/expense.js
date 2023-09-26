@@ -241,9 +241,6 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append('date', date);
         formData.append('description', description);
 
-        console.log(formData.expenseCategory, formData.amount, formData.date, formData.creditor, formData.description )
-
-
         // Create options object for fetch request
         const requestOptions = {
             method: 'POST',
