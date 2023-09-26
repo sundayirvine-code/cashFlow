@@ -158,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     let creditId;
+    let dateTaken;
     // Attach a click event to all payment icons in the table rows
     const paymentIcons = document.querySelectorAll('.bi-credit-card-fill');
     paymentIcons.forEach(icon => {
@@ -167,6 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const debtorPaymentInput = document.getElementById('debtorPayment');
             debtorPaymentInput.value = debtorName;
             creditId = event.target.getAttribute('data-transaction-id');
+            dateTaken = event.target.getAttribute('data-date-taken');
 
             // Show the payment form
             const transactionPaymentForm = document.getElementById('transactionPaymentForm');
@@ -191,8 +193,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const debtorPayment = document.getElementById('debtorPayment').value;
         const amountToPay = parseFloat(document.getElementById('amountToPay').value);
         const datePaid = document.getElementById('datePaid').value;
-
+ 
         // Data validation for amount and date fields
+        if (datePaid < dateTaken) {
+            alert('Date of credit settlement should be after the date taken.');
+            return;
+        }
+
         if (isNaN(amountToPay) || amountToPay <= 0) {
             alert('Amount should be a positive number.');
             return;
@@ -224,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 // Handle the response, e.g., display a success message
-                console.log('Credit settlement successful:', data);
+                //console.log('Credit settlement successful:', data);
 
                 // Hide the payment form
                 const transactionPaymentForm = document.getElementById('transactionPaymentForm');
@@ -240,6 +247,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Update the payment icon attributes
                 event.target.setAttribute('data-amount-paid', data.amountPaid);
                 event.target.setAttribute('data-progress', data.progress);
+
+                // Display the success message
+                const successMessage = document.getElementById('successMessage');
+                successMessage.textContent = 'Credit Settlement successfully recorded';
+                successMessage.style.display = 'block';
+                successMessage.style.opacity = '1';
+
+                // Use setTimeout to hide the message after a delay
+                setTimeout(() => {
+                    successMessage.style.opacity = '0';
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 500);
+                }, 2000);
             })
             .catch(error => {
                 // Handle errors
