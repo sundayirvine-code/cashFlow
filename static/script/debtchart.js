@@ -1,4 +1,3 @@
-// Function to render the horizontal bar chart
 async function renderCreditChart() {
     try {
         // Retrieve data attributes from the 'Chart' element
@@ -27,39 +26,39 @@ async function renderCreditChart() {
             }],
         };
 
-        const creditChart = new Chart(ctx, {
-            type: 'bar',
-            data: budgetData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                devicePixelRatio: 2,
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: {
-                            display: true, // Show X-axis grid lines
-                            color: 'rgba(255, 255, 255, 0.3)', // Set the color of X-axis grid lines
-                        },
-                    },
-                    y: {
-                        grid: {
-                            display: true, // Show Y-axis grid lines
-                            color: 'rgba(255, 255, 255, 0.3)', // Set the color of Y-axis grid lines
-                        },
+        // Check the viewport width
+        const isMobile = window.innerWidth <= 768;
+
+        // Configure chart options based on viewport width
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            devicePixelRatio: 2,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true, // Show X-axis grid lines
+                        color: 'rgba(255, 255, 255, 0.3)', // Set the color of X-axis grid lines
                     },
                 },
-                plugins: {
-                    legend: {
-                        display: false, // Hide legend
+                y: {
+                    grid: {
+                        display: true, // Show Y-axis grid lines
+                        color: 'rgba(255, 255, 255, 0.3)', // Set the color of Y-axis grid lines
                     },
-                    title: {
-                        display: false,
-                        text: 'Budget Overview', // Set your chart title here
-                        font: {
-                            size: 15, // Set the font size for the title
-                            weight: 'bold', // Set the font weight (optional)
-                        },
+                },
+            },
+            plugins: {
+                legend: {
+                    display: false, // Hide legend
+                },
+                title: {
+                    display: false,
+                    text: 'Budget Overview', // Set your chart title here
+                    font: {
+                        size: 15, // Set the font size for the title
+                        weight: 'bold', // Set the font weight (optional)
                     },
                 },
                 tooltips: {
@@ -71,6 +70,16 @@ async function renderCreditChart() {
                     },
                 },
             },
+        };
+
+        if (isMobile) {
+            options.indexAxis = 'y'; // Set indexAxis to 'y' for mobile viewports
+        }
+
+        const creditChart = new Chart(ctx, {
+            type: 'bar',
+            data: budgetData,
+            options: options,
         });
 
     } catch (error) {
