@@ -174,4 +174,7 @@ form input{
         max-width: 90vw !important;
         width: 90vw !important;
     }
+    #transactionForm, #modal-edit, #modal-delete {
+        width: 80vw;
+    }
 }
