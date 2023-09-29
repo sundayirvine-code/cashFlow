@@ -1096,7 +1096,7 @@ def delete_expense_transaction():
         # Check if the transaction is associated with a budget
         if transaction.date and transaction.expense_id:
             # Extract the month and year from the transaction's date
-            transaction_month = get_month_name(transaction.date.month)
+            transaction_month = transaction.date.month
             transaction_year = transaction.date.year
 
             # Find the corresponding budget
@@ -1360,7 +1360,7 @@ def search_budget_by_year_month():
     year = data.get('year')
     month = data.get('month')
 
-    month = get_month_name(int(month))
+    month = int(month)
     
     try:
         # Query for the budget with the specified year and month

@@ -267,6 +267,7 @@ tr:hover{
 
 @media (max-width: 850px) { 
     #transactionBox{
+        min-height: calc(100vh - 400px);
         max-height: calc(100vh - 400px);
         overflow-y: scroll;
     }
