@@ -170,7 +170,7 @@ class Budget(db.Model):
         user_id (int): The foreign key referencing the associated User.
         year (int): The year of the budget.
         month (int): The month of the budget.
-         budget_expenses (relationship): One-to-many relationship with BudgetExpense.
+        budget_expenses (relationship): One-to-many relationship with BudgetExpense.
          
     Constraints:
         Unique constraint on user_id and month.
