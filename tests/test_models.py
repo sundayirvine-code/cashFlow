@@ -17,7 +17,7 @@ import unittest
 from app import app, db
 from models import *
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 
 class TestModels(unittest.TestCase):
@@ -401,6 +401,48 @@ class TestModels(unittest.TestCase):
 
             retrieved_credit = Credit.query.filter_by(debtor='Cardholder Ltd.', user_id=user.id).first()
             self.assertIsNotNone(retrieved_credit)
+
+    def test_creditor_payment_model(self):
+        """
+        Test CreditorPayment model.
+        """
+        with app.app_context():
+            user = User(first_name='user9', last_name='user9', password='password9', email='user9@example.com')
+            db.session.add(user)
+            db.session.commit()
+
+            debt = Debt(user_id=user.id, creditor='Lender Inc.', amount=1000.00, date_taken=datetime.utcnow())
+            db.session.add(debt)
+            db.session.commit()
+
+            creditor_payment = CreditorPayment(debt_id=debt.id, amount=500.00, date=datetime(2023, 10, 2))
+            db.session.add(creditor_payment)
+            db.session.commit()
+
+            retrieved_creditor_payment = CreditorPayment.query.filter_by(amount=500.00).first()
+            self.assertIsNotNone(retrieved_creditor_payment)
+            self.assertEqual(retrieved_creditor_payment.debt_id, debt.id)
+
+    def test_debtor_payment_model(self):
+        """
+        Test DebtorPayment model.
+        """
+        with app.app_context():
+            user = User(first_name='user10', last_name='user10', password='password10', email='user10@example.com')
+            db.session.add(user)
+            db.session.commit()
+
+            credit = Credit(user_id=user.id, debtor='Cardholder Ltd.', amount=500.00, date_taken=datetime.utcnow())
+            db.session.add(credit)
+            db.session.commit()
+
+            debtor_payment = DebtorPayment(credit_id=credit.id, amount=250.00, date=datetime(2023, 10, 2))
+            db.session.add(debtor_payment)
+            db.session.commit()
+
+            retrieved_debtor_payment = DebtorPayment.query.filter_by(amount=250.00).first()
+            self.assertIsNotNone(retrieved_debtor_payment)
+            self.assertEqual(retrieved_debtor_payment.credit_id, credit.id)
 
 if __name__ == '__main__':
     unittest.main()
