@@ -66,20 +66,6 @@ class TestAuthentication(unittest.TestCase):
             self.assertIsNotNone(result)
             user = User.query.filter_by(email='test@example.com').first()
             self.assertIsNotNone(user)
-    
-    '''
-    @patch('auth.register_user')
-    def test_register_duplicate_email(self, mock_register_user):
-        """
-        Test registering a user with a duplicate email.
-        
-        This method tests the scenario where a user attempts to register with an
-        email that is already associated with another user, and verifies that the registration fails.
-        """
-        mock_register_user.return_value = 'Username or email already exists. Please choose a different one.'
-        with app.app_context():
-            result = register_user('test_user2', 'test_password2', 'test3@example.com')
-            self.assertEqual(result, 'Username or email already exists. Please choose a different one.')'''
 
     def test_authenticate_user(self):
         """
