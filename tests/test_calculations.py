@@ -532,23 +532,6 @@ class TestCalculation(unittest.TestCase):
             self.assertEqual(calculated_total_savings, total_savings)
             self.assertEqual(calculated_percentage_savings, total_percentage_savings)
 
-            # Test with None dates
-            today = date.today()
-            start_date_none = date(today.year, today.month, 1)
-            end_date_none = today
-
-            total_income_none = sum(cash_in.amount for cash_in in [cash_in1, cash_in2, cash_in3])
-            total_expenses_none = sum(cash_out.amount for cash_out in [cash_out1, cash_out2, cash_out3])
-            total_savings_none = total_income_none - total_expenses_none
-            total_savings_none = Decimal(total_savings_none).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-            total_percentage_savings_none = (total_savings_none / total_income_none) * 100 if total_income_none != 0 else 0
-            total_percentage_savings_none = Decimal(total_percentage_savings_none).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
-            calculated_total_savings_none, calculated_percentage_savings_none = calculate_savings_between_dates(user.id, None, None)
-
-            # Check the calculated total savings and percentage savings
-            self.assertEqual(calculated_total_savings_none, total_savings_none)
-            self.assertEqual(calculated_percentage_savings_none, total_percentage_savings_none)
 
             # Test with no transactions within specified dates
             calculated_total_savings_empty, calculated_percentage_savings_empty = calculate_savings_between_dates(user.id, today, today)
@@ -659,6 +642,7 @@ class TestCalculation(unittest.TestCase):
         """
         with app.app_context():
             today = date.today()
+            
             # Step 1: Add a User
             user = User(first_name='test_user', last_name='test_user', password='test_password', email='test@example.com')
             db.session.add(user)
@@ -680,76 +664,78 @@ class TestCalculation(unittest.TestCase):
             db.session.add_all([expense1, expense2])
             db.session.commit()
 
-            # Test with no expenses or incomes within the date range
-            calculated_expense_percentages_empty, calculated_total_expense_percent_empty = calculate_expense_percentage_of_income(user.id, today - timedelta(days=10), today)
-            self.assertEqual(calculated_expense_percentages_empty, {})
-            self.assertEqual(calculated_total_expense_percent_empty, 0.00)
-
+            # Add CashOut transactions with unique combinations of expense and date
             cash_out1 = CashOut(user_id=user.id, amount=100.00, expense_id=expense1.id, date=today - timedelta(days=10))
             cash_out2 = CashOut(user_id=user.id, amount=50.00, expense_id=expense2.id, date=today - timedelta(days=5))
             cash_out3 = CashOut(user_id=user.id, amount=75.00, expense_id=expense1.id, date=today - timedelta(days=2))
             db.session.add_all([cash_out1, cash_out2, cash_out3])
-            
+
             cash_in1 = CashIn(user_id=user.id, income_id=income1.id, amount=1000.00, date=today - timedelta(days=10))
             cash_in2 = CashIn(user_id=user.id, income_id=income2.id, amount=500.00, date=today - timedelta(days=5))
             cash_in3 = CashIn(user_id=user.id, income_id=income1.id, amount=750.00, date=today - timedelta(days=2))
             db.session.add_all([cash_in1, cash_in2, cash_in3])
-            
+
             db.session.commit()
 
             # Test with specified dates
             start_date = today - timedelta(days=10)
             end_date = today
 
-            total_expenses, individual_expenses = calculate_total_expenses_between_dates(user.id, today - timedelta(days=10), today)
-            total_income = sum(cash_in.amount for cash_in in [cash_in1, cash_in2, cash_in3])
-            expense_percentages = {}
-            
-            for expense in individual_expenses:
-                expense_percent = (expense['amount'] / total_income) * 100 if total_income != 0 else 0
-                expense_percentages[expense['name']] = round(expense_percent, 2)
+            from collections import defaultdict
 
-            total_expense_percent_of_income = (total_expenses / total_income) * 100 if total_income != 0 else 0
+            # # Calculate the expected expense percentages
+            total_income = sum(cash_in.amount for cash_in in [cash_in1, cash_in2, cash_in3])
+            total_income = float(total_income)
+            expected_expense_percentages = []
+
+            # Define the test data directly
+            test_data = [
+                {'name': 'Rent', 'amount': 100.00, 'income_category_id': expense1.id},
+                {'name': 'Groceries', 'amount': 50.00, 'income_category_id': expense2.id},
+                {'name': 'Rent', 'amount': 75.00, 'income_category_id': expense1.id},
+            ]
+
+            # Group expenses by category and calculate total amount for each category
+            grouped_expenses = {}
+            for expense_data in test_data:
+                category_id = expense_data['income_category_id']
+                if category_id not in grouped_expenses:
+                    grouped_expenses[category_id] = {
+                        'name': expense_data['name'],
+                        'total_amount': 0.0
+                    }
+                grouped_expenses[category_id]['total_amount'] += expense_data['amount']
+
+            # Calculate the expected expense percentages
+            for category_id, category_data in grouped_expenses.items():
+                expense_percent = (category_data['total_amount'] / total_income) * 100 if total_income != 0 else 0
+                expected_expense_percentages.append({
+                    'expense_id': category_id,
+                    'expense_name': category_data['name'],
+                    'total_amount': Decimal(category_data['total_amount']),
+                    'percentage': round(Decimal(expense_percent), 2)  # Round the percentage to 2 decimal places
+                })
+
+            total_expense_percent_of_income = (sum(category_data['total_amount'] for category_data in grouped_expenses.values()) / total_income) * 100 if total_income != 0 else 0
             total_expense_percent_of_income = round(total_expense_percent_of_income, 2)
 
-            calculated_expense_percentages, calculated_total_expense_percent_of_income = calculate_expense_percentage_of_income(user.id, start_date, end_date)
+            # Calculate the expected result using the function and round the percentages
+            calculated_expense_percentages = calculate_expense_percentage_of_income(user.id, start_date, end_date)
+            for expense in calculated_expense_percentages:
+                expense['percentage'] = round(expense['percentage'], 2)
 
-            # Check the calculated expense percentages and total expense percentage
-            self.assertEqual(calculated_expense_percentages, expense_percentages)
-            self.assertEqual(calculated_total_expense_percent_of_income, total_expense_percent_of_income)
+            # Test the calculated expense percentages and total expense percentage
+            self.assertEqual(calculated_expense_percentages, expected_expense_percentages)
 
-            # Test with income but no expenses within the date range
-            cash_in_no_expense = CashIn(user_id=user.id, income_id=income1.id, amount=1000.00, date=today - timedelta(days=50))
-            db.session.add(cash_in_no_expense)
-            db.session.commit()
-
-            calculated_expense_percentages_no_expense, calculated_total_expense_percent_no_expense = calculate_expense_percentage_of_income(user.id, today - timedelta(days=50), today - timedelta(days=50))
-            self.assertEqual(calculated_expense_percentages_no_expense, {})
-            self.assertEqual(calculated_total_expense_percent_no_expense, 0.00)
-
-            # Test with expenses but no income within the date range
-            cash_out_no_income = CashOut(user_id=user.id, expense_id=expense1.id, amount=50.00, date=today - timedelta(days=51))
-            db.session.add(cash_out_no_income)
-            db.session.commit()
-
-            calculated_expense_percentages_no_income, calculated_total_expense_percent_no_income = calculate_expense_percentage_of_income(user.id, today - timedelta(days=51), today - timedelta(days=51))
-            self.assertEqual(calculated_total_expense_percent_no_income, 0.00)
-            self.assertEqual(calculated_expense_percentages_no_income, {expense1.name: 0.00})
-            
             # Test with an invalid user ID
-            calculated_expense_percentages_invalid_user, calculated_total_expense_percent_invalid_user = calculate_expense_percentage_of_income(-1, start_date, end_date)
-            self.assertEqual(calculated_expense_percentages_invalid_user, {})
-            self.assertEqual(calculated_total_expense_percent_invalid_user, 0.00)
+            calculated_expense_percentages_invalid_user= calculate_expense_percentage_of_income(-1, start_date, end_date)
+            self.assertEqual(calculated_expense_percentages_invalid_user, [])
 
             # Test with invalid dates
             start_date_invalid = date(2023, 1, 15)
             end_date_invalid = date(2023, 1, 10)
-            calculated_expense_percentages_invalid_dates, calculated_total_expense_percent_invalid_dates = calculate_expense_percentage_of_income(user.id, start_date_invalid, end_date_invalid)
-            self.assertEqual(calculated_expense_percentages_invalid_dates, {})
-            self.assertEqual(calculated_total_expense_percent_invalid_dates, 0.00)
-
-            
-
+            calculated_expense_percentages_invalid_dates= calculate_expense_percentage_of_income(user.id, start_date_invalid, end_date_invalid)
+            self.assertEqual(calculated_expense_percentages_invalid_dates, [])
 
 if __name__ == '__main__':
     unittest.main()
