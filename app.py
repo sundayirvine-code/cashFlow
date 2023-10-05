@@ -667,7 +667,6 @@ def expense():
         '''
         today = date.today()
         start_date = date(today.year, today.month, 1)
-
         end_date = date.today()
 
         # settled debt amount
