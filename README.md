@@ -56,12 +56,12 @@ CashFlow provides a user-friendly interface to manage and explore incomes and ex
    - First create income categories by clicking the "+" button in the categories section.
    - create an Income transaction entry by clicking the "+" button in the transactions section. Fill the required details and submit
 
-4.  **Manage Expense:**
+4. **Manage Expense:**
    - Locate the 'Expense' tab on the navigation menu and click on it. You will be directed to the expense management page.
    - First create expense categories by clicking the "+" button in the categories section.
    - create an Expense transaction entry by clicking the "+" button in the transactions section. Fill the required details and submit
 
-5.  **Manage Credit:**
+5. **Manage Credit:**
    - This is the section that helps you manage the way you lend your money
    - Locate the 'Credit' tab on the navigation menu and click on it. You will be directed to the Credit management page.
    - create a Credit transaction entry by clicking the "+" button in the debtors section. Fill the required details and submit
@@ -173,6 +173,6 @@ For any inquiries or feedback regarding CashFlow, you can reach out to the proje
 
 GitHub: [sundayirvine-code](https://github.com/sundayirvine-code/)  
 LinkedIn: [Irvine Sunday](https://www.linkedin.com/in/irvine-amugumbi-49ba6b201/)  
-Portfolio: [Irvine Sunday's Portfolio](https://irvine-sunday-portfolio.vercel.app/)
+Portfolio: [Irvine Sunday's Portfolio](https://irvine-sunday-portfolio.vercel.app/)  
 CashFlow: [CashFlow](https://cashflow.pythonanywhere.com/)    
 Feel free to connect with me through these platforms for any questions, suggestions, or collaboration opportunities. I look forward to hearing from you!
